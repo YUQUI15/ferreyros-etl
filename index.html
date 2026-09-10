@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FERREYROS — Plataforma ETL & Dashboards</title>
+
+  <!-- CDN: Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CDN: Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- CDN: SheetJS (lee y escribe .xlsx directamente en el navegador) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <!-- CDN: Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <!-- CDN: Firebase App Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- Firebase Config (usuario pega sus credenciales aquí) -->
+  <script src="firebase.config.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { yellow: '#FDB813' },
+            corp: { blue: '#0B2545', dark: '#071220', accent: '#134074' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #0b1120; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    .tab-active { border-bottom: 2px solid #FDB813; color: #FDB813; font-weight: 700; }
+    .drop-zone.drag-over { border-color: #FDB813 !important; background: rgba(253,184,19,0.05) !important; }
+    .progress-animate { animation: progressPulse 1.2s ease-in-out infinite; }
+    @keyframes progressPulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans antialiased">
+
+<!-- ========================================================================= -->
+<!-- NAVBAR -->
+<!-- ========================================================================= -->
+<header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="h-9 w-9 rounded-lg bg-amber-400 flex items-center justify-center text-slate-950 font-black text-lg shadow-lg shadow-amber-500/20">F</div>
+      <div class="hidden sm:block">
+        <h1 class="text-sm font-bold text-white leading-none flex items-center gap-2">
+          FERREYROS <span class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/30">ETL PRO 3.0 ☁️</span>
+        </h1>
+        <p class="text-[10px] text-slate-400 mt-0.5">Automatización de Inventarios · Nube · Sin Instalación</p>
+      </div>
+    </div>
+
+    <nav class="flex gap-0.5 overflow-x-auto">
+      <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="nav-tab tab-active px-2 sm:px-3 py-3 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 whitespace-nowrap transition">
+        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i><span class="hidden sm:inline">Dashboard</span>
+      </button>
+      <button onclick="switchTab('pipeline')" id="tab-btn-pipeline" class="nav-tab px-2 sm:px-3 py-3 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 whitespace-nowrap transition">
+        <i data-lucide="zap" class="w-3.5 h-3.5"></i><span class="hidden sm:inline">Pipeline</span>
+      </button>
+      <button onclick="switchTab('etl')" id="tab-btn-etl" class="nav-tab px-2 sm:px-3 py-3 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 whitespace-nowrap transition">
+        <i data-lucide="git-merge" class="w-3.5 h-3.5"></i><span class="hidden sm:inline">ETL Universal</span>
+      </button>
+      <button onclick="switchTab('historial')" id="tab-btn-historial" class="nav-tab px-2 sm:px-3 py-3 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 whitespace-nowrap transition">
+        <i data-lucide="history" class="w-3.5 h-3.5"></i><span class="hidden sm:inline">Historial</span>
+      </button>
+      <button onclick="switchTab('archivos')" id="tab-btn-archivos" class="nav-tab px-2 sm:px-3 py-3 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 whitespace-nowrap transition">
+        <i data-lucide="folder" class="w-3.5 h-3.5"></i><span class="hidden sm:inline">Archivos</span>
+      </button>
+    </nav>
+
+    <div id="firebase-badge" class="shrink-0 hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+      <span id="fb-status-dot" class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+      <span id="fb-status-text">Firebase</span>
+    </div>
+  </div>
+</header>
+
+<!-- ========================================================================= -->
+<!-- CONTENIDO PRINCIPAL -->
+<!-- ========================================================================= -->
+<main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 lg:p-6 space-y-5">
+
+  <!-- ======================================================================= -->
+  <!-- TAB 1: DASHBOARD EJECUTIVO -->
+  <!-- ======================================================================= -->
+  <section id="tab-content-dashboard" class="tab-pane space-y-5">
+
+    <!-- Encabezado -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div>
+        <h2 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4 text-amber-400"></i> Panel de Control de Inventario</h2>
+        <p class="text-xs text-slate-400 mt-0.5" id="dash-last-update">Sin datos — Ejecuta el Pipeline para ver métricas.</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="loadDashboard()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 border border-slate-700 transition">
+          <i data-lucide="refresh-cw" class="w-3 h-3"></i> Actualizar
+        </button>
+        <button onclick="switchTab('pipeline')" class="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition">
+          <i data-lucide="play" class="w-3 h-3"></i> Ejecutar Pipeline
+        </button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 flex justify-between items-center">Total SKUs <i data-lucide="boxes" class="w-3.5 h-3.5 text-blue-400"></i></div>
+        <div class="text-2xl font-black text-white" id="kpi-skus">—</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">Materiales analizados</div>
+      </div>
+      <div class="bg-rose-950/40 border border-rose-900/40 rounded-xl p-3">
+        <div class="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-1 flex justify-between items-center">Quiebres <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i></div>
+        <div class="text-2xl font-black text-rose-300" id="kpi-quiebres">—</div>
+        <div class="text-[10px] text-rose-400/70 mt-0.5">Stock &lt; Mínimo</div>
+      </div>
+      <div class="bg-amber-950/40 border border-amber-900/40 rounded-xl p-3">
+        <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1 flex justify-between items-center">Sobrestock <i data-lucide="archive" class="w-3.5 h-3.5"></i></div>
+        <div class="text-2xl font-black text-amber-300" id="kpi-sobrestock">—</div>
+        <div class="text-[10px] text-amber-400/70 mt-0.5">Stock &gt; Máximo</div>
+      </div>
+      <div class="bg-emerald-950/40 border border-emerald-900/40 rounded-xl p-3">
+        <div class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1 flex justify-between items-center">OK <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i></div>
+        <div class="text-2xl font-black text-emerald-300" id="kpi-ok">—</div>
+        <div class="text-[10px] text-emerald-400/70 mt-0.5">En rango operativo</div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 flex justify-between items-center">Valor Stock <i data-lucide="coins" class="w-3.5 h-3.5 text-amber-400"></i></div>
+        <div class="text-sm font-black text-amber-300 truncate" id="kpi-stock-pen">—</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">Soles (PEN)</div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1 flex justify-between items-center">Consumo MB51 <i data-lucide="trending-up" class="w-3.5 h-3.5 text-purple-400"></i></div>
+        <div class="text-sm font-black text-purple-300 truncate" id="kpi-consumo-pen">—</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">Clase 601 (PEN)</div>
+      </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col">
+        <h3 class="text-xs font-semibold text-white mb-3 flex items-center gap-2"><i data-lucide="pie-chart" class="w-3.5 h-3.5 text-amber-400"></i> Distribución de Estado de Stock</h3>
+        <div class="relative flex-1 min-h-[230px] flex items-center justify-center">
+          <canvas id="chartHealth"></canvas>
+          <div id="chartHealth-placeholder" class="text-xs text-slate-500 absolute">Sin datos — ejecuta el pipeline</div>
+        </div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col">
+        <h3 class="text-xs font-semibold text-white mb-3 flex items-center gap-2"><i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-rose-400"></i> Top Quiebres por Déficit (PEN)</h3>
+        <div class="relative flex-1 min-h-[230px]">
+          <canvas id="chartQuiebres"></canvas>
+          <div id="chartQuiebres-placeholder" class="text-xs text-slate-500 absolute inset-0 flex items-center justify-center">Sin datos</div>
+        </div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col">
+        <h3 class="text-xs font-semibold text-white mb-3 flex items-center gap-2"><i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-purple-400"></i> Top Consumo por Material (PEN)</h3>
+        <div class="relative flex-1 min-h-[230px]">
+          <canvas id="chartConsumo"></canvas>
+          <div id="chartConsumo-placeholder" class="text-xs text-slate-500 absolute inset-0 flex items-center justify-center">Sin datos</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla Quiebres Críticos -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-xs font-semibold text-white flex items-center gap-2"><i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-400"></i> Quiebres Críticos — Reposición Urgente</h3>
+        <input type="text" id="filter-alertas" oninput="filterAlertasTable()" placeholder="Buscar material..." class="px-2.5 py-1 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 w-44 focus:outline-none focus:border-amber-500/50">
+      </div>
+      <div class="overflow-x-auto max-h-64">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase font-semibold text-[10px] border-b border-slate-800 sticky top-0">
+            <tr>
+              <th class="py-2.5 px-3 cursor-pointer hover:text-white" onclick="sortAlertas('Material')">Material ↕</th>
+              <th class="py-2.5 px-3">Descripción</th>
+              <th class="py-2.5 px-3 text-right cursor-pointer hover:text-white" onclick="sortAlertas('Stock_EWM')">Stock EWM ↕</th>
+              <th class="py-2.5 px-3 text-right">Stock Min</th>
+              <th class="py-2.5 px-3 text-right cursor-pointer hover:text-white" onclick="sortAlertas('Valor_Stock_PEN')">Valor PEN ↕</th>
+              <th class="py-2.5 px-3 text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="alertas-tbody" class="divide-y divide-slate-800/50 font-mono">
+            <tr><td colspan="6" class="py-8 text-center text-slate-500 font-sans">Ejecuta el pipeline para ver alertas.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 2: PIPELINE MAESTRO FERREYROS -->
+  <!-- ======================================================================= -->
+  <section id="tab-content-pipeline" class="tab-pane hidden space-y-5">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-5">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="zap" class="w-5 h-5 text-amber-400"></i> Pipeline Maestro Ferreyros (1 Clic)</h2>
+          <p class="text-xs text-slate-400 mt-1">Cruza automáticamente EWM + MB51 + Planilla + Transferencias. Repara todos los errores #N/A. Genera 4 reportes formateados en Excel.</p>
+        </div>
+        <button id="btn-run" onclick="runFerreyrosPipeline()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition whitespace-nowrap">
+          <i data-lucide="play-circle" class="w-4 h-4"></i> EJECUTAR AHORA
+        </button>
+      </div>
+
+      <!-- Zonas de carga de archivos -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div class="drop-zone bg-slate-950 border-2 border-dashed border-slate-700 rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-amber-500/50 transition" onclick="document.getElementById('input-ewm').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'ewm')">
+          <i data-lucide="database" class="w-8 h-8 text-slate-500 mb-2"></i>
+          <div class="text-xs font-bold text-amber-400 mb-1">1. EWM — Inventario SAP</div>
+          <div class="text-[10px] text-slate-500 mb-2">Stock físico por ubicación</div>
+          <div id="file-name-ewm" class="text-[10px] text-emerald-400 font-mono truncate w-full">Sin archivo</div>
+          <input type="file" id="input-ewm" class="hidden" accept=".xlsx,.xls,.csv" onchange="onFileSelect(this,'ewm')">
+        </div>
+        <div class="drop-zone bg-slate-950 border-2 border-dashed border-slate-700 rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-amber-500/50 transition" onclick="document.getElementById('input-mb51').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'mb51')">
+          <i data-lucide="truck" class="w-8 h-8 text-slate-500 mb-2"></i>
+          <div class="text-xs font-bold text-amber-400 mb-1">2. MB51 — Movimientos SAP</div>
+          <div class="text-[10px] text-slate-500 mb-2">Salidas a cliente (Clase 601)</div>
+          <div id="file-name-mb51" class="text-[10px] text-emerald-400 font-mono truncate w-full">Sin archivo</div>
+          <input type="file" id="input-mb51" class="hidden" accept=".xlsx,.xls,.csv" onchange="onFileSelect(this,'mb51')">
+        </div>
+        <div class="drop-zone bg-slate-950 border-2 border-dashed border-slate-700 rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-amber-500/50 transition" onclick="document.getElementById('input-planilla').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'planilla')">
+          <i data-lucide="table" class="w-8 h-8 text-slate-500 mb-2"></i>
+          <div class="text-xs font-bold text-amber-400 mb-1">3. Planilla de Stock</div>
+          <div class="text-[10px] text-slate-500 mb-2">Parámetros Min/Max y Demanda</div>
+          <div id="file-name-planilla" class="text-[10px] text-emerald-400 font-mono truncate w-full">Sin archivo</div>
+          <input type="file" id="input-planilla" class="hidden" accept=".xlsx,.xls,.csv" onchange="onFileSelect(this,'planilla')">
+        </div>
+        <div class="drop-zone bg-slate-950 border-2 border-dashed border-slate-700 rounded-xl p-4 flex flex-col items-center text-center cursor-pointer hover:border-amber-500/50 transition" onclick="document.getElementById('input-transf').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'transf')">
+          <i data-lucide="arrow-left-right" class="w-8 h-8 text-slate-500 mb-2"></i>
+          <div class="text-xs font-bold text-amber-400 mb-1">4. Transferencias</div>
+          <div class="text-[10px] text-slate-500 mb-2">Con fórmulas rotas (#N/A)</div>
+          <div id="file-name-transf" class="text-[10px] text-emerald-400 font-mono truncate w-full">Sin archivo (Opcional)</div>
+          <input type="file" id="input-transf" class="hidden" accept=".xlsx,.xls,.csv" onchange="onFileSelect(this,'transf')">
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div id="progress-wrap" class="hidden mb-4 space-y-1.5">
+        <div class="flex justify-between text-xs text-slate-300">
+          <span id="progress-label">Procesando...</span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+          <div id="progress-bar" class="bg-amber-500 h-2 rounded-full transition-all duration-500 progress-animate" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Terminal de logs -->
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 mb-5">
+        <div class="flex items-center justify-between border-b border-slate-800/60 pb-2 mb-2">
+          <div class="flex items-center gap-2 text-[10px] font-mono text-slate-400">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Registro de ejecución
+          </div>
+          <button onclick="document.getElementById('terminal').innerHTML=''" class="text-[10px] text-slate-500 hover:text-slate-300">Limpiar</button>
+        </div>
+        <pre id="terminal" class="text-[11px] font-mono text-slate-300 h-32 overflow-y-auto select-text leading-relaxed">Listo para ejecutar. Arrastra los archivos arriba o haz clic para seleccionarlos.</pre>
+      </div>
+
+      <!-- Botones de descarga de resultados -->
+      <div id="download-section" class="hidden">
+        <div class="flex items-center gap-2 mb-3 text-xs text-emerald-400 font-semibold">
+          <i data-lucide="check-circle" class="w-4 h-4"></i> ¡Pipeline completado! Descarga tus reportes:
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <button id="btn-dl-macro" onclick="downloadReport('macro')" class="py-2.5 px-3 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Consolidado Maestro
+          </button>
+          <button id="btn-dl-alertas" onclick="downloadReport('alertas')" class="py-2.5 px-3 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Alertas de Stock
+          </button>
+          <button id="btn-dl-transf" onclick="downloadReport('transf')" class="py-2.5 px-3 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i> Transferencias
+          </button>
+          <button id="btn-dl-consumo" onclick="downloadReport('consumo')" class="py-2.5 px-3 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Consumo MB51
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 3: MOTOR ETL DINÁMICO UNIVERSAL -->
+  <!-- ======================================================================= -->
+  <section id="tab-content-etl" class="tab-pane hidden space-y-5">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+      <div class="border-b border-slate-800 pb-4 mb-5">
+        <h2 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="git-merge" class="w-5 h-5 text-amber-400"></i> Motor ETL Universal — "Extrae de X y pon en Y"</h2>
+        <p class="text-xs text-slate-400 mt-1">Cruza cualquier par de archivos (.xlsx, .xls, .csv) en el navegador. Aplica filtros, cálculos y exporta a Excel. Sin servidor. Sin instalación.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+        <!-- Archivo A -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h4 class="text-xs font-bold text-amber-400 flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center text-[10px]">A</span> Tabla Principal (Origen)</h4>
+          <div class="drop-zone border-2 border-dashed border-slate-700 rounded-lg p-3 text-center cursor-pointer hover:border-amber-500/50 transition" onclick="document.getElementById('etl-input-a').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleEtlDrop(event,'a')">
+            <div class="text-[10px] text-slate-400 mb-1">Haz clic o arrastra un archivo .xlsx/.csv</div>
+            <div id="etl-fname-a" class="text-[10px] text-emerald-400 font-mono">Sin archivo</div>
+            <input type="file" id="etl-input-a" class="hidden" accept=".xlsx,.xls,.csv" onchange="onEtlFileSelect(this,'a')">
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Hoja (sheet)</label>
+            <select id="etl-sheet-a" onchange="onEtlSheetSelect('a')" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"><option value="">— Selecciona hoja —</option></select>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Columna Clave de Cruce</label>
+            <select id="etl-key-a" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"><option>— Selecciona columna —</option></select>
+          </div>
+        </div>
+
+        <!-- Archivo B -->
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h4 class="text-xs font-bold text-blue-400 flex items-center gap-2"><span class="w-5 h-5 rounded-full bg-blue-500/20 flex items-center justify-center text-[10px]">B</span> Tabla Secundaria (Fuente de datos a extraer)</h4>
+          <div class="drop-zone border-2 border-dashed border-slate-700 rounded-lg p-3 text-center cursor-pointer hover:border-blue-500/50 transition" onclick="document.getElementById('etl-input-b').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleEtlDrop(event,'b')">
+            <div class="text-[10px] text-slate-400 mb-1">Haz clic o arrastra un archivo .xlsx/.csv</div>
+            <div id="etl-fname-b" class="text-[10px] text-emerald-400 font-mono">Sin archivo</div>
+            <input type="file" id="etl-input-b" class="hidden" accept=".xlsx,.xls,.csv" onchange="onEtlFileSelect(this,'b')">
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Hoja (sheet)</label>
+            <select id="etl-sheet-b" onchange="onEtlSheetSelect('b')" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"><option value="">— Selecciona hoja —</option></select>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Columna Clave de Cruce</label>
+            <select id="etl-key-b" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"><option>— Selecciona columna —</option></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Opciones ETL -->
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3 mb-5">
+        <h4 class="text-xs font-bold text-slate-200">Opciones del Cruce</h4>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Tipo de Join</label>
+            <select id="etl-join-type" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+              <option value="left">Left Join (todos de A + datos de B)</option>
+              <option value="inner">Inner Join (solo coincidencias)</option>
+              <option value="outer">Full Outer (todos de ambos)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Filtro rápido (columna)</label>
+            <select id="etl-filter-col" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"><option value="">Sin filtro</option></select>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Operador</label>
+            <select id="etl-filter-op" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+              <option value="contains">Contiene</option>
+              <option value="eq">Igual a (==)</option>
+              <option value="gt">Mayor que (&gt;)</option>
+              <option value="lt">Menor que (&lt;)</option>
+              <option value="neq">Diferente de (!=)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Valor del filtro</label>
+            <input type="text" id="etl-filter-val" placeholder="ej: QUIEBRE" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Nueva columna calculada</label>
+            <input type="text" id="etl-calc-name" placeholder="ej: Margen_PEN" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Columna A para cálculo</label>
+            <select id="etl-calc-col-a" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white"><option value="">—</option></select>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Operación</label>
+            <select id="etl-calc-op" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+              <option value="+">+ Suma</option><option value="-">- Resta</option>
+              <option value="*">× Multiplica</option><option value="/">÷ Divide</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Columna B o constante</label>
+            <input type="text" id="etl-calc-col-b" placeholder="ej: UnitVV o 1.18" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <div class="text-xs text-slate-400" id="etl-row-count"></div>
+        <button onclick="runEtl()" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 transition">
+          <i data-lucide="sparkles" class="w-4 h-4"></i> PROCESAR Y DESCARGAR EXCEL
+        </button>
+      </div>
+
+      <!-- Preview resultados ETL -->
+      <div id="etl-preview-wrap" class="hidden mt-4 pt-4 border-t border-slate-800">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs text-emerald-400 font-semibold" id="etl-preview-summary"></div>
+        </div>
+        <div class="overflow-x-auto max-h-52 border border-slate-800 rounded-xl">
+          <table class="w-full text-left text-[11px]">
+            <thead id="etl-preview-thead" class="bg-slate-950 text-slate-400 font-semibold sticky top-0"></thead>
+            <tbody id="etl-preview-tbody" class="divide-y divide-slate-800/50 font-mono text-slate-300"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 4: HISTORIAL DE CORRIDAS (Firebase) -->
+  <!-- ======================================================================= -->
+  <section id="tab-content-historial" class="tab-pane hidden space-y-5">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-amber-400"></i> Historial de Corridas — Firebase</h2>
+          <p class="text-xs text-slate-400 mt-1">Cada ejecución del pipeline queda registrada en Firestore. Accesible desde cualquier dispositivo.</p>
+        </div>
+        <button onclick="loadHistorial()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 border border-slate-700 transition">
+          <i data-lucide="refresh-cw" class="w-3 h-3"></i> Actualizar
+        </button>
+      </div>
+      <div id="historial-container" class="space-y-2">
+        <div class="text-xs text-slate-500 py-8 text-center">Cargando historial desde Firebase...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================= -->
+  <!-- TAB 5: ARCHIVOS CARGADOS -->
+  <!-- ======================================================================= -->
+  <section id="tab-content-archivos" class="tab-pane hidden space-y-5">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="folder" class="w-5 h-5 text-amber-400"></i> Archivos Procesados en Esta Sesión</h2>
+          <p class="text-xs text-slate-400 mt-1">Los archivos se procesan en la RAM del navegador. Ningún dato se envía a servidores externos.</p>
+        </div>
+      </div>
+      <div id="archivos-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="text-xs text-slate-500 py-8 text-center col-span-2">Carga archivos en el Pipeline o ETL para verlos aquí.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ========================================================================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================================================================= -->
+<script>
+
+// ============================================================================
+// 1. FIREBASE INIT
+// ============================================================================
+let db = null;
+let firebaseReady = false;
+
+function initFirebase() {
+  try {
+    const isPlaceholder = (typeof FIREBASE_CONFIG === 'undefined')
+      || FIREBASE_CONFIG.apiKey.includes('PEGA_');
+    
+    if (!isPlaceholder) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.firestore();
+      firebaseReady = true;
+      document.getElementById('fb-status-dot').className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
+      document.getElementById('fb-status-text').textContent = 'Firebase OK';
+      document.getElementById('firebase-badge').className = document.getElementById('firebase-badge').className.replace('text-slate-400','text-emerald-400');
+      logTerminal('Firebase Firestore conectado ✓');
+    } else {
+      document.getElementById('fb-status-dot').className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
+      document.getElementById('fb-status-text').textContent = 'Firebase: Config pendiente';
+      logTerminal('Firebase no configurado. Usando almacenamiento local (localStorage). Para activar Firebase, edita firebase.config.js con tus credenciales.');
+    }
+  } catch (e) {
+    logTerminal('Firebase error: ' + e.message);
+  }
+}
+
+async function saveToFirestore(collection, data) {
+  if (!firebaseReady || !db) {
+    // Fallback: localStorage
+    const key = `ferreyros_${collection}`;
+    const arr = JSON.parse(localStorage.getItem(key) || '[]');
+    arr.unshift({ ...data, id: Date.now(), savedAt: new Date().toISOString() });
+    localStorage.setItem(key, JSON.stringify(arr.slice(0, 50))); // Keep last 50
+    return;
+  }
+  try {
+    await db.collection(collection).add({ ...data, savedAt: firebase.firestore.FieldValue.serverTimestamp() });
+  } catch(e) {
+    console.error('Firestore write error:', e);
+  }
+}
+
+async function getFromFirestore(collection, limit=20) {
+  if (!firebaseReady || !db) {
+    const key = `ferreyros_${collection}`;
+    return JSON.parse(localStorage.getItem(key) || '[]').slice(0, limit);
+  }
+  try {
+    const snap = await db.collection(collection).orderBy('savedAt', 'desc').limit(limit).get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) {
+    console.error('Firestore read error:', e);
+    return [];
+  }
+}
+
+// ============================================================================
+// 2. SHEETJS UTILITIES
+// ============================================================================
+const SESSION_FILES = {}; // {key: {wb, filename, size}}
+const PIPELINE_DATA = {};  // Latest pipeline results
+
+function normalizeKey(str) {
+  return String(str || '').trim().toUpperCase().replace(/\s+/g, '');
+}
+
+function parseNum(val) {
+  const n = parseFloat(String(val || '').replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+
+async function readFileAsArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function parseFile(file) {
+  const ab = await readFileAsArrayBuffer(file);
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    const text = new TextDecoder('utf-8').decode(ab);
+    const ws = XLSX.utils.aoa_to_sheet(text.split('\n').map(l => l.split(',')));
+    return { sheetNames: ['Data'], sheets: { 'Data': XLSX.utils.sheet_to_json(ws) } };
+  }
+  const wb = XLSX.read(ab, { type: 'array', cellText: true, cellDates: true });
+  const sheets = {};
+  for (const sn of wb.SheetNames) {
+    try {
+      sheets[sn] = XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval: '' });
+    } catch(e) { /* skip chart sheets */ }
+  }
+  return { sheetNames: wb.SheetNames, sheets };
+}
+
+function sheetToRows(sheetData, maxPreview=25) {
+  if (!sheetData || sheetData.length === 0) return { columns: [], rows: [] };
+  const columns = Object.keys(sheetData[0]);
+  const rows = sheetData.slice(0, maxPreview).map(r => columns.map(c => String(r[c] || '')));
+  return { columns, rows };
+}
+
+function exportToXlsx(data, filename, sheetName='Resultado') {
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0,31));
+  
+  // Apply basic header styling (range-based)
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  for (let col = range.s.c; col <= range.e.c; col++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c: col });
+    if (!ws[addr]) continue;
+    ws[addr].s = { fill: { fgColor: { rgb: '1F4E79' } }, font: { bold: true, color: { rgb: 'FFFFFF' } }, alignment: { horizontal: 'center' } };
+  }
+
+  XLSX.writeFile(wb, filename);
+}
+
+function exportMultiSheetXlsx(sheetsMap, filename) {
+  const wb = XLSX.utils.book_new();
+  for (const [name, data] of Object.entries(sheetsMap)) {
+    if (data && data.length > 0) {
+      const ws = XLSX.utils.json_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, name.substring(0,31));
+    }
+  }
+  XLSX.writeFile(wb, filename);
+}
+
+// ============================================================================
+// 3. FERREYROS ETL ENGINE (JavaScript port del Python)
+// ============================================================================
+async function runFerreyrosPipeline() {
+  const btn = document.getElementById('btn-run');
+  const progressWrap = document.getElementById('progress-wrap');
+  const progressBar = document.getElementById('progress-bar');
+  const progressLabel = document.getElementById('progress-label');
+  const progressPct = document.getElementById('progress-pct');
+  const terminal = document.getElementById('terminal');
+
+  const files = {
+    ewm: document.getElementById('input-ewm').files[0],
+    mb51: document.getElementById('input-mb51').files[0],
+    planilla: document.getElementById('input-planilla').files[0],
+    transf: document.getElementById('input-transf').files[0]
+  };
+
+  if (!files.ewm || !files.mb51 || !files.planilla) {
+    alert('Faltan archivos requeridos. Carga EWM, MB51 y Planilla de Stock primero.');
+    return;
+  }
+
+  // UI: start
+  btn.disabled = true;
+  btn.classList.add('opacity-50');
+  progressWrap.classList.remove('hidden');
+  document.getElementById('download-section').classList.add('hidden');
+  terminal.innerHTML = '';
+
+  const log = (msg) => {
+    terminal.innerHTML += `${new Date().toLocaleTimeString()} › ${msg}\n`;
+    terminal.scrollTop = terminal.scrollHeight;
+  };
+  const setProgress = (pct, label) => {
+    progressBar.style.width = pct + '%';
+    progressPct.textContent = pct + '%';
+    progressLabel.textContent = label;
+  };
+
+  try {
+    // ---- ETAPA 1: EWM ----
+    setProgress(10, 'Etapa 1/6: Leyendo EWM (Inventario físico SAP)...');
+    log(`Leyendo ${files.ewm.name}...`);
+    const ewmParsed = await parseFile(files.ewm);
+    const ewmSheetName = ewmParsed.sheetNames.find(s => s === 'Data') || ewmParsed.sheetNames[0];
+    const ewmRows = ewmParsed.sheets[ewmSheetName] || [];
+    
+    const ewmMap = new Map();
+    for (const row of ewmRows) {
+      const key = normalizeKey(row['Producto'] || row['Material'] || '');
+      if (!key || key === 'NAN') continue;
+      const qty = parseNum(row['Ctd.'] || row['Cantidad'] || 0);
+      const ex = ewmMap.get(key) || { stock: 0, ubicacion: '', nUbic: 0 };
+      ex.stock += qty;
+      if (row['Ubicación'] || row['Ubicacion']) { ex.ubicacion = row['Ubicación'] || row['Ubicacion']; ex.nUbic++; }
+      ewmMap.set(key, ex);
+    }
+    log(`EWM: ${ewmRows.length} filas → ${ewmMap.size} materiales únicos.`);
+
+    // ---- ETAPA 2: MB51 ----
+    setProgress(25, 'Etapa 2/6: Leyendo MB51 (Movimientos SAP)...');
+    log(`Leyendo ${files.mb51.name}...`);
+    const mb51Parsed = await parseFile(files.mb51);
+    const mb51Sheet = mb51Parsed.sheetNames.find(s => s === 'Data') || mb51Parsed.sheetNames[0];
+    const mb51Rows = mb51Parsed.sheets[mb51Sheet] || [];
+    
+    const mb51Map = new Map();
+    let totalConsumoPEN = 0;
+    for (const row of mb51Rows) {
+      const clase = String(row['Clase de movimiento'] || '').trim();
+      if (clase !== '601') continue;
+      const key = normalizeKey(row['Material'] || '');
+      const qty = Math.abs(parseNum(row['Ctd.en UM entrada'] || row['Cantidad'] || 0));
+      const valor = Math.abs(parseNum(row['Impte.mon.local'] || row['Valor'] || 0));
+      totalConsumoPEN += valor;
+      const ex = mb51Map.get(key) || { consumo: 0, valor: 0, nMov: 0 };
+      ex.consumo += qty; ex.valor += valor; ex.nMov++;
+      mb51Map.set(key, ex);
+    }
+    log(`MB51: ${mb51Rows.length} documentos → ${mb51Map.size} materiales con consumo.`);
+
+    // ---- ETAPA 3: PLANILLA ----
+    setProgress(40, 'Etapa 3/6: Leyendo Planilla de Stock (parámetros maestros)...');
+    log(`Leyendo ${files.planilla.name} (puede tardar ~30s para archivos grandes)...`);
+    const planParsed = await parseFile(files.planilla);
+    const planSheet = planParsed.sheetNames.find(s => s === 'Export') || planParsed.sheetNames[0];
+    const planRows = planParsed.sheets[planSheet] || [];
+    
+    const planMap = new Map();
+    for (const row of planRows) {
+      const key = normalizeKey(row['Material'] || '');
+      if (key) planMap.set(key, row);
+    }
+    log(`Planilla: ${planRows.length} materiales en catálogo.`);
+
+    // ---- ETAPA 4: CRUCE Y ALERTAS ----
+    setProgress(60, 'Etapa 4/6: Cruzando EWM + Planilla → Alertas de Stock...');
+    log('Calculando estados de stock para cada material...');
+    
+    const alertas = [];
+    let quiebres = 0, sobrestock = 0, ok = 0, sinParam = 0, totalStockPEN = 0;
+    const topQuiebresRaw = [];
+    const topConsumoRaw = [];
+
+    for (const [key, planRow] of planMap) {
+      const ewmRow = ewmMap.get(key);
+      const mb51Row = mb51Map.get(key);
+      const stockFisico = ewmRow ? ewmRow.stock : 0;
+      const stockMin = parseNum(planRow['Stock Mínimo'] || planRow['Stock Minimo'] || 0);
+      const stockMax = parseNum(planRow['Stock Máximo'] || planRow['Stock Maximo'] || 0);
+      const unitVV = parseNum(planRow['UnitVV'] || planRow['Precio Unitario'] || 0);
+      
+      let estado;
+      if (stockMin === 0 && stockMax === 0) { estado = 'SIN PARAMETRO'; sinParam++; }
+      else if (stockFisico < stockMin) { estado = 'QUIEBRE'; quiebres++; }
+      else if (stockFisico > stockMax) { estado = 'SOBRESTOCK'; sobrestock++; }
+      else { estado = 'OK'; ok++; }
+      
+      const valorStock = stockFisico * unitVV;
+      totalStockPEN += valorStock;
+      const difMin = stockFisico - stockMin;
+      
+      const alert = {
+        Material: planRow['Material'] || key,
+        Descripcion: planRow['Descripción de Material'] || planRow['Descripcion de Material'] || '',
+        MajorCode: planRow['MajorCode'] || '',
+        Tipo_Min: planRow['Tipo MIN'] || '',
+        Stock_EWM: +stockFisico.toFixed(2),
+        OnHand_QTY: parseNum(planRow['OnHand QTY'] || 0),
+        Stock_Minimo: stockMin,
+        Stock_Maximo: stockMax,
+        Diferencia_vs_Min: +difMin.toFixed(2),
+        Estado_Stock: estado,
+        UnitVV: unitVV,
+        Valor_Stock_PEN: +valorStock.toFixed(2),
+        Consumo_Unidades: mb51Row ? +mb51Row.consumo.toFixed(2) : 0,
+        Valor_Consumo_PEN: mb51Row ? +mb51Row.valor.toFixed(2) : 0,
+        Ubicacion: ewmRow ? ewmRow.ubicacion : ''
+      };
+      alertas.push(alert);
+      
+      if (estado === 'QUIEBRE') {
+        topQuiebresRaw.push({ ...alert, Deficit_PEN: Math.abs(difMin) * unitVV });
+      }
+      if (mb51Row) {
+        topConsumoRaw.push({ Material: alert.Material, Descripcion: alert.Descripcion, Valor_PEN: mb51Row.valor });
+      }
+    }
+    log(`Alertas: ${quiebres} quiebres | ${sobrestock} sobrestock | ${ok} OK | ${sinParam} sin parámetro.`);
+
+    const topQuiebres = topQuiebresRaw.sort((a, b) => b.Deficit_PEN - a.Deficit_PEN).slice(0, 10);
+    const topConsumo = topConsumoRaw.sort((a, b) => b.Valor_PEN - a.Valor_PEN).slice(0, 10);
+
+    // ---- ETAPA 5: TRANSFERENCIAS ----
+    setProgress(75, 'Etapa 5/6: Procesando Transferencias (reparando #N/A)...');
+    const transfItems = [];
+    if (files.transf) {
+      log(`Leyendo ${files.transf.name} y reparando campos #N/A...`);
+      const trParsed = await parseFile(files.transf);
+      const trSheet = trParsed.sheetNames.find(s => s === 'Hoja2') || trParsed.sheetNames[0];
+      const trRows = trParsed.sheets[trSheet] || [];
+      for (const row of trRows) {
+        const key = normalizeKey(row['Número de parte'] || row['Numero de parte'] || row['Material'] || '');
+        const ewmRow = ewmMap.get(key);
+        const planRow = planMap.get(key);
+        const stockReal = ewmRow ? ewmRow.stock : 0;
+        const stockMax = planRow ? parseNum(planRow['Stock Máximo'] || planRow['Stock Maximo'] || 0) : 0;
+        const unitVV = planRow ? parseNum(planRow['UnitVV'] || 0) : 0;
+        const cantEnvio = Math.max(0, stockReal - stockMax);
+        transfItems.push({
+          ...Object.fromEntries(Object.entries(row).filter(([k]) => !['Stock','Stock Mínimo','Stock Máximo','Cant. De envio','Cantidad que Queda'].includes(k))),
+          Stock_Real_EWM: +stockReal.toFixed(2),
+          Stock_Maximo_Plan: stockMax,
+          Cant_Envio_Recomendada: +cantEnvio.toFixed(2),
+          Cantidad_que_Queda: +(stockReal - cantEnvio).toFixed(2),
+          Valor_Envio_PEN: +(cantEnvio * unitVV).toFixed(2)
+        });
+      }
+      log(`Transferencias: ${transfItems.length} ítems reparados (sin #N/A).`);
+    }
+
+    // ---- ETAPA 6: EXPORTAR + GUARDAR ----
+    setProgress(90, 'Etapa 6/6: Generando reportes Excel y guardando en Firebase...');
+    
+    // Guardar en memoria de sesión
+    PIPELINE_DATA.alertas = alertas;
+    PIPELINE_DATA.transfItems = transfItems;
+    PIPELINE_DATA.mb51Map = mb51Map;
+    PIPELINE_DATA.kpis = { quiebres, sobrestock, ok, sinParam, totalStockPEN: +totalStockPEN.toFixed(2), totalConsumoPEN: +totalConsumoPEN.toFixed(2), totalSkus: alertas.length };
+    PIPELINE_DATA.topQuiebres = topQuiebres;
+    PIPELINE_DATA.topConsumo = topConsumo;
+    PIPELINE_DATA.timestamp = new Date().toISOString();
+
+    // Guardar en Firebase / localStorage
+    const kpisPayload = {
+      kpis: PIPELINE_DATA.kpis,
+      topQuiebres: topQuiebres.slice(0,5).map(t=>({Material:t.Material,Desc:t.Descripcion.substring(0,40),Stock:t.Stock_EWM,Min:t.Stock_Minimo,Deficit:t.Deficit_PEN})),
+      topConsumo: topConsumo.slice(0,5).map(t=>({Material:t.Material,Desc:t.Descripcion.substring(0,40),Valor:t.Valor_PEN})),
+      timestamp: PIPELINE_DATA.timestamp,
+      archivos: { ewm: files.ewm.name, mb51: files.mb51.name, planilla: files.planilla.name, transf: files.transf ? files.transf.name : null }
+    };
+    await saveToFirestore('historial', kpisPayload);
+    log('Resultados guardados en Firebase Firestore.');
+
+    setProgress(100, '¡Pipeline completado con éxito!');
+    progressBar.classList.remove('progress-animate');
+    document.getElementById('download-section').classList.remove('hidden');
+    log('─────────────────────────────────────');
+    log(`Total materiales:   ${alertas.length.toLocaleString()}`);
+    log(`Quiebres:           ${quiebres.toLocaleString()}`);
+    log(`Sobrestock:         ${sobrestock.toLocaleString()}`);
+    log(`Stock OK:           ${ok.toLocaleString()}`);
+    log(`Valor inventario:   S/. ${totalStockPEN.toLocaleString('es-PE', {minimumFractionDigits:2})}`);
+    log(`Consumo total:      S/. ${totalConsumoPEN.toLocaleString('es-PE', {minimumFractionDigits:2})}`);
+    log('─────────────────────────────────────');
+    log('PIPELINE FINALIZADO CON ÉXITO ✓');
+
+    // Actualizar dashboard
+    updateDashboard();
+
+  } catch (err) {
+    log(`ERROR: ${err.message}`);
+    log(err.stack || '');
+    setProgress(0, 'Error — revisa la consola de arriba');
+    progressBar.classList.remove('progress-animate');
+    progressBar.classList.add('bg-rose-500');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('opacity-50');
+  }
+}
+
+// ============================================================================
+// 4. DESCARGA DE REPORTES
+// ============================================================================
+function downloadReport(type) {
+  const ts = new Date().toISOString().replace(/[:.]/g,'-').substring(0,19);
+  switch(type) {
+    case 'alertas':
+      exportToXlsx(PIPELINE_DATA.alertas || [], `reporte_alertas_stock_${ts}.xlsx`, 'Alertas_Stock');
+      break;
+    case 'transf':
+      exportToXlsx(PIPELINE_DATA.transfItems || [], `reporte_transferencias_${ts}.xlsx`, 'Transferencias_Reparadas');
+      break;
+    case 'consumo': {
+      const consumoData = [];
+      if (PIPELINE_DATA.mb51Map) {
+        for (const [key, row] of PIPELINE_DATA.mb51Map) {
+          const plan = (PIPELINE_DATA.alertas || []).find(a => normalizeKey(a.Material) === key);
+          consumoData.push({
+            Material: plan ? plan.Material : key,
+            Descripcion: plan ? plan.Descripcion : '',
+            Consumo_Unidades: +row.consumo.toFixed(2),
+            Valor_PEN: +row.valor.toFixed(2),
+            N_Movimientos: row.nMov
+          });
+        }
+      }
+      consumoData.sort((a,b) => b.Valor_PEN - a.Valor_PEN);
+      exportToXlsx(consumoData, `reporte_consumo_${ts}.xlsx`, 'Consumo_MB51');
+      break;
+    }
+    case 'macro': {
+      const kpis = PIPELINE_DATA.kpis || {};
+      const resumen = [
+        { Indicador: 'Total SKUs Analizados', Valor: kpis.totalSkus || 0 },
+        { Indicador: 'Quiebres de Stock', Valor: kpis.quiebres || 0 },
+        { Indicador: 'Sobrestock', Valor: kpis.sobrestock || 0 },
+        { Indicador: 'Stock OK', Valor: kpis.stock_ok || kpis.ok || 0 },
+        { Indicador: 'Sin Parámetro', Valor: kpis.sinParam || 0 },
+        { Indicador: 'Valor Total Inventario PEN', Valor: `S/. ${(kpis.totalStockPEN||0).toLocaleString('es-PE',{minimumFractionDigits:2})}` },
+        { Indicador: 'Consumo Total PEN (MB51 601)', Valor: `S/. ${(kpis.totalConsumoPEN||0).toLocaleString('es-PE',{minimumFractionDigits:2})}` },
+        { Indicador: 'Ítems para Transferencia', Valor: (PIPELINE_DATA.transfItems||[]).length },
+        { Indicador: 'Fecha de Generación', Valor: new Date().toLocaleString('es-PE') }
+      ];
+      exportMultiSheetXlsx({
+        'Resumen Ejecutivo': resumen,
+        'Alertas Completas': (PIPELINE_DATA.alertas || []).slice(0,100000),
+        'Quiebres': (PIPELINE_DATA.alertas || []).filter(a => a.Estado_Stock === 'QUIEBRE'),
+        'Sobrestock': (PIPELINE_DATA.alertas || []).filter(a => a.Estado_Stock === 'SOBRESTOCK'),
+        'Transferencias Reparadas': PIPELINE_DATA.transfItems || []
+      }, `MACRO_CONSOLIDADO_${ts}.xlsx`);
+      break;
+    }
+  }
+}
+
+// ============================================================================
+// 5. DASHBOARD — RENDERIZADO DE KPIs Y GRÁFICOS
+// ============================================================================
+let charts = {};
+
+function updateDashboard() {
+  const kpis = PIPELINE_DATA.kpis;
+  if (!kpis) return;
+
+  document.getElementById('kpi-skus').textContent = (kpis.totalSkus||0).toLocaleString();
+  document.getElementById('kpi-quiebres').textContent = (kpis.quiebres||0).toLocaleString();
+  document.getElementById('kpi-sobrestock').textContent = (kpis.sobrestock||0).toLocaleString();
+  document.getElementById('kpi-ok').textContent = (kpis.ok||kpis.stock_ok||0).toLocaleString();
+  document.getElementById('kpi-stock-pen').textContent = `S/. ${(kpis.totalStockPEN||0).toLocaleString('es-PE',{minimumFractionDigits:2})}`;
+  document.getElementById('kpi-consumo-pen').textContent = `S/. ${(kpis.totalConsumoPEN||0).toLocaleString('es-PE',{minimumFractionDigits:2})}`;
+  document.getElementById('dash-last-update').textContent = `Última corrida: ${new Date(PIPELINE_DATA.timestamp||Date.now()).toLocaleString('es-PE')}`;
+
+  renderChartHealth(kpis);
+  renderChartQuiebres(PIPELINE_DATA.topQuiebres || []);
+  renderChartConsumo(PIPELINE_DATA.topConsumo || []);
+  renderAlertasTable(PIPELINE_DATA.alertas || []);
+}
+
+function renderChartHealth(kpis) {
+  document.getElementById('chartHealth-placeholder').style.display = 'none';
+  const ctx = document.getElementById('chartHealth').getContext('2d');
+  if (charts.health) charts.health.destroy();
+  charts.health = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Quiebres', 'Sobrestock', 'OK', 'Sin Parámetro'],
+      datasets: [{ data: [kpis.quiebres||0, kpis.sobrestock||0, kpis.ok||kpis.stock_ok||0, kpis.sinParam||0], backgroundColor: ['#f43f5e','#f59e0b','#10b981','#64748b'], borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } } } }
+  });
+}
+
+function renderChartQuiebres(items) {
+  document.getElementById('chartQuiebres-placeholder').style.display = 'none';
+  const ctx = document.getElementById('chartQuiebres').getContext('2d');
+  if (charts.quiebres) charts.quiebres.destroy();
+  const labels = items.map(i => (i.Material||'').replace(/^AA:|^Y1:/,'').substring(0,12));
+  const values = items.map(i => +(i.Deficit_PEN||0).toFixed(2));
+  charts.quiebres = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Déficit PEN', data: values, backgroundColor: '#f43f5e', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font:{size:10} } }, y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family:'monospace', size:10 } } } } }
+  });
+}
+
+function renderChartConsumo(items) {
+  document.getElementById('chartConsumo-placeholder').style.display = 'none';
+  const ctx = document.getElementById('chartConsumo').getContext('2d');
+  if (charts.consumo) charts.consumo.destroy();
+  const labels = items.map(i => (i.Material||'').replace(/^AA:|^Y1:/,'').substring(0,12));
+  const values = items.map(i => +(i.Valor_PEN||0).toFixed(2));
+  charts.consumo = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Consumo PEN', data: values, backgroundColor: '#a855f7', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font:{size:10} } }, y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family:'monospace', size:10 } } } } }
+  });
+}
+
+let alertasSortCol = null, alertasSortAsc = true;
+function sortAlertas(col) {
+  if (alertasSortCol === col) alertasSortAsc = !alertasSortAsc; else { alertasSortCol = col; alertasSortAsc = false; }
+  const data = [...(PIPELINE_DATA.alertas||[])].sort((a,b) => {
+    const va = a[col]; const vb = b[col];
+    if (typeof va === 'number') return alertasSortAsc ? va-vb : vb-va;
+    return alertasSortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+  });
+  renderAlertasTable(data);
+}
+
+function filterAlertasTable() {
+  const q = document.getElementById('filter-alertas').value.toLowerCase();
+  const filtered = (PIPELINE_DATA.alertas||[]).filter(a =>
+    a.Material.toLowerCase().includes(q) || (a.Descripcion||'').toLowerCase().includes(q)
+  );
+  renderAlertasTable(filtered.slice(0,200));
+}
+
+function renderAlertasTable(data) {
+  const tbody = document.getElementById('alertas-tbody');
+  const display = data.filter(a => a.Estado_Stock === 'QUIEBRE').slice(0, 200);
+  if (!display.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No hay quiebres registrados.</td></tr>';
+    return;
+  }
+  const colors = { 'QUIEBRE': 'text-rose-300', 'SOBRESTOCK': 'text-amber-300', 'OK': 'text-emerald-300', 'SIN PARAMETRO': 'text-slate-400' };
+  tbody.innerHTML = display.map(a => `
+    <tr class="hover:bg-slate-800/30">
+      <td class="py-2 px-3 font-bold ${colors[a.Estado_Stock]||''}">${a.Material}</td>
+      <td class="py-2 px-3 text-slate-300 font-sans text-[11px] max-w-[180px] truncate">${a.Descripcion}</td>
+      <td class="py-2 px-3 text-right font-bold text-white">${(+a.Stock_EWM).toFixed(1)}</td>
+      <td class="py-2 px-3 text-right text-slate-400">${(+a.Stock_Minimo).toFixed(1)}</td>
+      <td class="py-2 px-3 text-right text-amber-300">S/.${(+a.Valor_Stock_PEN).toLocaleString('es-PE',{minimumFractionDigits:2})}</td>
+      <td class="py-2 px-3 text-center"><span class="text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded font-sans">REPONER</span></td>
+    </tr>`).join('');
+}
+
+// ============================================================================
+// 6. MOTOR ETL DINÁMICO UNIVERSAL
+// ============================================================================
+const ETL_FILES = { a: null, b: null };
+const ETL_SHEETS = { a: {}, b: {} };
+
+async function onEtlFileSelect(input, side) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById(`etl-fname-${side}`).textContent = file.name;
+  const parsed = await parseFile(file);
+  ETL_FILES[side] = file;
+  ETL_SHEETS[side] = parsed.sheets;
+  
+  const sheetSel = document.getElementById(`etl-sheet-${side}`);
+  sheetSel.innerHTML = parsed.sheetNames.map(s => `<option value="${s}">${s}</option>`).join('');
+  onEtlSheetSelect(side);
+  updateArchivos();
+}
+
+function onEtlSheetSelect(side) {
+  const sheetName = document.getElementById(`etl-sheet-${side}`).value;
+  const rows = ETL_SHEETS[side][sheetName] || [];
+  const cols = rows.length > 0 ? Object.keys(rows[0]) : [];
+  
+  const keySel = document.getElementById(`etl-key-${side}`);
+  keySel.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
+  
+  if (side === 'a') {
+    const filterCol = document.getElementById('etl-filter-col');
+    filterCol.innerHTML = '<option value="">Sin filtro</option>' + cols.map(c=>`<option value="${c}">${c}</option>`).join('');
+    const calcColA = document.getElementById('etl-calc-col-a');
+    calcColA.innerHTML = '<option value="">—</option>' + cols.map(c=>`<option value="${c}">${c}</option>`).join('');
+    document.getElementById('etl-row-count').textContent = `Archivo A: ${rows.length.toLocaleString()} filas × ${cols.length} columnas`;
+  }
+}
+
+function handleEtlDrop(event, side) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('drag-over');
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  const input = document.getElementById(`etl-input-${side}`);
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  onEtlFileSelect(input, side);
+}
+
+async function runEtl() {
+  const sheetA = document.getElementById('etl-sheet-a').value;
+  const sheetB = document.getElementById('etl-sheet-b').value;
+  const keyA = document.getElementById('etl-key-a').value;
+  const keyB = document.getElementById('etl-key-b').value;
+  const joinType = document.getElementById('etl-join-type').value;
+  const filterCol = document.getElementById('etl-filter-col').value;
+  const filterOp = document.getElementById('etl-filter-op').value;
+  const filterVal = document.getElementById('etl-filter-val').value.trim();
+  const calcName = document.getElementById('etl-calc-name').value.trim();
+  const calcColA = document.getElementById('etl-calc-col-a').value;
+  const calcOp = document.getElementById('etl-calc-op').value;
+  const calcColB = document.getElementById('etl-calc-col-b').value.trim();
+
+  if (!ETL_SHEETS.a[sheetA]) { alert('Carga el Archivo A primero.'); return; }
+
+  let rowsA = [...(ETL_SHEETS.a[sheetA] || [])];
+  let result = [];
+
+  if (ETL_SHEETS.b[sheetB] && keyA && keyB) {
+    // Build lookup Map from B
+    const mapB = new Map();
+    for (const row of ETL_SHEETS.b[sheetB]) {
+      const k = normalizeKey(row[keyB] || '');
+      if (!mapB.has(k)) mapB.set(k, row);
+    }
+    for (const rowA of rowsA) {
+      const k = normalizeKey(rowA[keyA] || '');
+      const rowB = mapB.get(k);
+      if (joinType === 'inner' && !rowB) continue;
+      const merged = { ...rowA };
+      if (rowB) {
+        for (const [bKey, bVal] of Object.entries(rowB)) {
+          const outKey = (bKey in merged) ? `${bKey}_B` : bKey;
+          merged[outKey] = bVal;
+        }
+      }
+      result.push(merged);
+    }
+    if (joinType === 'outer') {
+      const mapA = new Set(rowsA.map(r => normalizeKey(r[keyA]||'')));
+      for (const rowB of ETL_SHEETS.b[sheetB]) {
+        if (!mapA.has(normalizeKey(rowB[keyB]||''))) result.push({ ...rowB });
+      }
+    }
+  } else {
+    result = rowsA;
+  }
+
+  // Apply filter
+  if (filterCol && filterVal) {
+    result = result.filter(row => {
+      const val = String(row[filterCol] || '');
+      const num = parseNum(val);
+      const numVal = parseNum(filterVal);
+      switch (filterOp) {
+        case 'contains': return val.toLowerCase().includes(filterVal.toLowerCase());
+        case 'eq': return val === filterVal;
+        case 'neq': return val !== filterVal;
+        case 'gt': return num > numVal;
+        case 'lt': return num < numVal;
+        default: return true;
+      }
+    });
+  }
+
+  // Apply calculation
+  if (calcName && calcColA) {
+    const bIsNum = !isNaN(parseFloat(calcColB));
+    result = result.map(row => {
+      const va = parseNum(row[calcColA] || 0);
+      const vb = bIsNum ? parseFloat(calcColB) : parseNum(row[calcColB] || 0);
+      let calc;
+      switch (calcOp) {
+        case '+': calc = va + vb; break;
+        case '-': calc = va - vb; break;
+        case '*': calc = va * vb; break;
+        case '/': calc = vb !== 0 ? va / vb : null; break;
+        default: calc = 0;
+      }
+      return { ...row, [calcName]: calc !== null ? +calc.toFixed(4) : 'DIV/0' };
+    });
+  }
+
+  // Export
+  const ts = new Date().toISOString().replace(/[:.]/g,'-').substring(0,19);
+  exportToXlsx(result, `cruce_etl_${ts}.xlsx`, 'Resultado_ETL');
+
+  // Show preview
+  const previewWrap = document.getElementById('etl-preview-wrap');
+  previewWrap.classList.remove('hidden');
+  document.getElementById('etl-preview-summary').textContent = `${result.length.toLocaleString()} filas generadas. Descarga iniciada ↓`;
+  const cols = result.length > 0 ? Object.keys(result[0]) : [];
+  const thead = document.getElementById('etl-preview-thead');
+  const tbody = document.getElementById('etl-preview-tbody');
+  thead.innerHTML = `<tr>${cols.slice(0,10).map(c=>`<th class="py-2 px-2.5 truncate max-w-[120px]">${c}</th>`).join('')}${cols.length>10?'<th class="py-2 px-2">…</th>':''}</tr>`;
+  tbody.innerHTML = result.slice(0,20).map(r=>`<tr class="hover:bg-slate-800/30">${cols.slice(0,10).map(c=>`<td class="py-1.5 px-2.5 truncate max-w-[120px]">${r[c]??''}</td>`).join('')}${cols.length>10?'<td class="py-1.5 px-2 text-slate-500">…</td>':''}</tr>`).join('');
+}
+
+// ============================================================================
+// 7. HISTORIAL DE CORRIDAS (Firebase)
+// ============================================================================
+async function loadHistorial() {
+  const container = document.getElementById('historial-container');
+  container.innerHTML = '<div class="text-xs text-slate-500 py-6 text-center">Cargando desde ' + (firebaseReady ? 'Firebase Firestore' : 'almacenamiento local') + '...</div>';
+  
+  const items = await getFromFirestore('historial', 20);
+  
+  if (!items.length) {
+    container.innerHTML = '<div class="text-xs text-slate-500 py-6 text-center">Sin historial aún. Ejecuta el pipeline para crear la primera entrada.</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const k = item.kpis || {};
+    const ts = item.timestamp ? new Date(item.timestamp).toLocaleString('es-PE') : 'Fecha desconocida';
+    return `
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-mono text-amber-300">${ts}</span>
+          <span class="text-[10px] text-slate-500">${firebaseReady ? '☁️ Firebase' : '💾 Local'}</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div><div class="text-lg font-black text-white">${(k.totalSkus||0).toLocaleString()}</div><div class="text-[10px] text-slate-500">SKUs</div></div>
+          <div><div class="text-lg font-black text-rose-300">${(k.quiebres||0).toLocaleString()}</div><div class="text-[10px] text-slate-500">Quiebres</div></div>
+          <div><div class="text-lg font-black text-amber-300">${(k.sobrestock||0).toLocaleString()}</div><div class="text-[10px] text-slate-500">Sobrestock</div></div>
+          <div><div class="text-sm font-black text-emerald-300">S/.${(k.totalStockPEN||0).toLocaleString('es-PE',{minimumFractionDigits:0})}</div><div class="text-[10px] text-slate-500">Valor Stock</div></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================================================
+// 8. CARGA DESDE DASHBOARD (Firebase)
+// ============================================================================
+async function loadDashboard() {
+  const items = await getFromFirestore('historial', 1);
+  if (!items.length) return;
+  const latest = items[0];
+  if (!latest.kpis) return;
+  
+  PIPELINE_DATA.kpis = latest.kpis;
+  PIPELINE_DATA.topQuiebres = (latest.topQuiebres||[]).map(t=>({Material:t.Material, Descripcion:t.Desc||'', Deficit_PEN:t.Deficit||0, Stock_EWM:t.Stock||0, Stock_Minimo:t.Min||0, Valor_Stock_PEN:0}));
+  PIPELINE_DATA.topConsumo = (latest.topConsumo||[]).map(t=>({Material:t.Material, Descripcion:t.Desc||'', Valor_PEN:t.Valor||0}));
+  PIPELINE_DATA.alertas = [];
+  PIPELINE_DATA.timestamp = latest.timestamp;
+  updateDashboard();
+}
+
+// ============================================================================
+// 9. GESTOR DE ARCHIVOS DE SESIÓN
+// ============================================================================
+function onFileSelect(input, key) {
+  const file = input.files[0];
+  if (!file) return;
+  SESSION_FILES[key] = { name: file.name, size: (file.size/1024).toFixed(1) + ' KB', file };
+  document.getElementById(`file-name-${key}`).textContent = `✓ ${file.name}`;
+  updateArchivos();
+}
+
+function handleDrop(event, key) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('drag-over');
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  const input = document.getElementById(`input-${key}`);
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  onFileSelect(input, key);
+}
+
+function updateArchivos() {
+  const container = document.getElementById('archivos-container');
+  const all = { ...SESSION_FILES };
+  if (!Object.keys(all).length) {
+    container.innerHTML = '<div class="text-xs text-slate-500 py-6 text-center col-span-2">Carga archivos en Pipeline o ETL para verlos aquí.</div>';
+    return;
+  }
+  container.innerHTML = Object.entries(all).map(([key, f]) => `
+    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-[10px] font-bold text-amber-400 uppercase">${key.toUpperCase()}</span>
+        <span class="text-[10px] text-slate-500">${f.size}</span>
+      </div>
+      <div class="text-xs font-mono text-emerald-300 truncate">${f.name}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================================
+// 10. UTILIDADES DE UI
+// ============================================================================
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('tab-active'));
+  const content = document.getElementById(`tab-content-${tabId}`);
+  const btn = document.getElementById(`tab-btn-${tabId}`);
+  if (content) content.classList.remove('hidden');
+  if (btn) btn.classList.add('tab-active');
+  lucide.createIcons();
+
+  if (tabId === 'dashboard') loadDashboard();
+  if (tabId === 'historial') loadHistorial();
+}
+
+function logTerminal(msg) {
+  const el = document.getElementById('terminal');
+  if (el) { el.innerHTML += msg + '\n'; el.scrollTop = el.scrollHeight; }
+  else console.log('[LOG]', msg);
+}
+
+// ============================================================================
+// INIT
+// ============================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  initFirebase();
+  loadDashboard();
+});
+</script>
+
+</body>
+</html>
