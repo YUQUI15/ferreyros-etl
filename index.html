@@ -12,7 +12,6 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <!-- NUEVO: JSZip y FileSaver para crear carpetas estructuradas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
@@ -20,21 +19,14 @@
 
   <script>
     tailwind.config = {
-      darkMode: 'class', // Habilitar Dark Mode manual
+      darkMode: 'class',
       theme: {
         extend: {
           colors: {
             pastel: {
-              yellow: '#FBF8CC',
-              peach: '#FDE4CF',
-              pink: '#FFCFD2',
-              lightpink: '#F1C0E8',
-              purple: '#CFBAF0',
-              blue: '#A3C4F3',
-              lightblue: '#90DBF4',
-              cyan: '#8EECF5',
-              mint: '#98F5E1',
-              green: '#B9FBC0'
+              yellow: '#FBF8CC', peach: '#FDE4CF', pink: '#FFCFD2', lightpink: '#F1C0E8',
+              purple: '#CFBAF0', blue: '#A3C4F3', lightblue: '#90DBF4', cyan: '#8EECF5',
+              mint: '#98F5E1', green: '#B9FBC0'
             },
             corp: { blue: '#0B2545', dark: '#071220' }
           }
@@ -43,13 +35,11 @@
     }
   </script>
   <style>
-    /* Aumento general de tamaños de texto base */
     body { font-size: 16px; } 
     ::-webkit-scrollbar { width: 10px; height: 10px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
     .dark ::-webkit-scrollbar-thumb { background: #334155; }
-    
     .tab-active { border-bottom: 4px solid #FDB813; font-weight: 800; color: #0f172a; }
     .dark .tab-active { color: #f8fafc; }
     .drop-zone.drag-over { border-color: #FDB813 !important; background: rgba(253,184,19,0.1) !important; }
@@ -79,12 +69,20 @@
       <button onclick="switchTab('pipeline')" id="tab-btn-pipeline" class="nav-tab px-3 py-4 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 whitespace-nowrap transition">
         <i data-lucide="zap" class="w-5 h-5"></i><span class="hidden sm:inline">Pipeline</span>
       </button>
+      <!-- RESTAURADO: Pestaña ETL Universal -->
+      <button onclick="switchTab('etl')" id="tab-btn-etl" class="nav-tab px-3 py-4 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 whitespace-nowrap transition">
+        <i data-lucide="git-merge" class="w-5 h-5"></i><span class="hidden sm:inline">ETL Universal</span>
+      </button>
+      <!-- RESTAURADO: Pestaña Archivos -->
+      <button onclick="switchTab('archivos')" id="tab-btn-archivos" class="nav-tab px-3 py-4 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 whitespace-nowrap transition">
+        <i data-lucide="folder" class="w-5 h-5"></i><span class="hidden sm:inline">Archivos</span>
+      </button>
       <button onclick="switchTab('historial')" id="tab-btn-historial" class="nav-tab px-3 py-4 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white flex items-center gap-2 whitespace-nowrap transition">
         <i data-lucide="history" class="w-5 h-5"></i><span class="hidden sm:inline">Historial</span>
       </button>
 
       <!-- BOTÓN TEMA CLARO/OSCURO -->
-      <button onclick="toggleTheme()" class="ml-4 p-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition" title="Alternar Tema">
+      <button onclick="toggleTheme()" class="ml-4 p-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition shadow-sm" title="Alternar Tema">
         <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
         <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
       </button>
@@ -92,15 +90,10 @@
   </div>
 </header>
 
-<!-- CONTENIDO PRINCIPAL -->
 <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
-  <!-- ======================================================================= -->
   <!-- TAB 1: DASHBOARD EJECUTIVO -->
-  <!-- ======================================================================= -->
   <section id="tab-content-dashboard" class="tab-pane space-y-6">
-
-    <!-- Encabezado -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
       <div>
         <h2 class="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-6 h-6 text-amber-500"></i> Panel de Control de Inventario</h2>
@@ -116,7 +109,7 @@
       </div>
     </div>
 
-    <!-- KPIs (Colores Pastel en Modo Claro) -->
+    <!-- KPIs -->
     <div class="grid grid-cols-2 lg:grid-cols-6 gap-4">
       <div class="bg-pastel-blue dark:bg-slate-900 border border-blue-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm transition-colors">
         <div class="text-sm font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider mb-2 flex justify-between items-center">Total SKUs <i data-lucide="boxes" class="w-5 h-5 text-blue-600 dark:text-blue-400"></i></div>
@@ -144,7 +137,7 @@
       </div>
     </div>
 
-    <!-- Gráficos más grandes -->
+    <!-- Gráficos -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col min-h-[300px]">
         <h3 class="text-sm font-black text-slate-800 dark:text-white mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="w-5 h-5 text-amber-500"></i> Distribución de Stock</h3>
@@ -169,7 +162,7 @@
       </div>
     </div>
 
-    <!-- Tabla Gigante -->
+    <!-- Tabla -->
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
         <h3 class="text-base font-black text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="shield-alert" class="w-5 h-5 text-rose-500"></i> Quiebres Críticos — Reposición Urgente</h3>
@@ -195,9 +188,7 @@
     </div>
   </section>
 
-  <!-- ======================================================================= -->
   <!-- TAB 2: PIPELINE MAESTRO FERREYROS -->
-  <!-- ======================================================================= -->
   <section id="tab-content-pipeline" class="tab-pane hidden space-y-6">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5 mb-6">
@@ -210,7 +201,7 @@
         </button>
       </div>
 
-      <!-- Zonas de carga Grandes -->
+      <!-- Drop zones -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="drop-zone bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 flex flex-col items-center text-center cursor-pointer hover:border-amber-500 transition" onclick="document.getElementById('input-ewm').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'ewm')">
           <i data-lucide="database" class="w-10 h-10 text-slate-400 mb-3"></i>
@@ -219,7 +210,6 @@
           <div id="file-name-ewm" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono truncate w-full bg-emerald-100 dark:bg-emerald-900/30 py-1 px-2 rounded hidden"></div>
           <input type="file" id="input-ewm" class="hidden" accept=".xlsx,.xls,.csv" onchange="onFileSelect(this,'ewm')">
         </div>
-        
         <div class="drop-zone bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 flex flex-col items-center text-center cursor-pointer hover:border-amber-500 transition" onclick="document.getElementById('input-mb51').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'mb51')">
           <i data-lucide="truck" class="w-10 h-10 text-slate-400 mb-3"></i>
           <div class="text-sm font-black text-amber-600 dark:text-amber-400 mb-1">2. MB51 (Movimientos)</div>
@@ -227,7 +217,6 @@
           <div id="file-name-mb51" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono truncate w-full bg-emerald-100 dark:bg-emerald-900/30 py-1 px-2 rounded hidden"></div>
           <input type="file" id="input-mb51" class="hidden" accept=".xlsx,.xls,.csv" onchange="onFileSelect(this,'mb51')">
         </div>
-
         <div class="drop-zone bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 flex flex-col items-center text-center cursor-pointer hover:border-amber-500 transition" onclick="document.getElementById('input-planilla').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'planilla')">
           <i data-lucide="table" class="w-10 h-10 text-slate-400 mb-3"></i>
           <div class="text-sm font-black text-amber-600 dark:text-amber-400 mb-1">3. Planilla Stock</div>
@@ -235,7 +224,6 @@
           <div id="file-name-planilla" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono truncate w-full bg-emerald-100 dark:bg-emerald-900/30 py-1 px-2 rounded hidden"></div>
           <input type="file" id="input-planilla" class="hidden" accept=".xlsx,.xls,.csv" onchange="onFileSelect(this,'planilla')">
         </div>
-
         <div class="drop-zone bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 flex flex-col items-center text-center cursor-pointer hover:border-amber-500 transition" onclick="document.getElementById('input-transf').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'transf')">
           <i data-lucide="arrow-left-right" class="w-10 h-10 text-slate-400 mb-3"></i>
           <div class="text-sm font-black text-amber-600 dark:text-amber-400 mb-1">4. Transferencias</div>
@@ -256,19 +244,29 @@
         </div>
       </div>
 
-      <!-- Sección de Descargas (Estructurada en Carpetas ZIP) -->
+      <!-- RESTAURADO: Terminal de Logs -->
+      <div class="bg-slate-900 dark:bg-slate-950 border border-slate-800 rounded-xl p-4 mb-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+          <div class="flex items-center gap-2 text-xs font-mono text-slate-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Registro de ejecución del Motor
+          </div>
+          <button onclick="document.getElementById('terminal').innerHTML=''" class="text-xs text-slate-500 hover:text-slate-300">Limpiar</button>
+        </div>
+        <pre id="terminal" class="text-xs font-mono text-slate-300 h-40 overflow-y-auto select-text leading-relaxed">Listo para ejecutar. Arrastra los archivos arriba.</pre>
+      </div>
+
+      <!-- Sección de Descargas (Estructurada ZIP + Individuales Restauradas) -->
       <div id="download-section" class="hidden bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-6">
         <h3 class="text-lg font-black text-emerald-800 dark:text-emerald-400 flex items-center gap-2 mb-4">
           <i data-lucide="check-circle" class="w-6 h-6"></i> ¡Reportes Generados con Éxito!
         </h3>
         
-        <!-- BOTÓN PRINCIPAL DE DESCARGA ESTRUCTURADA -->
         <button onclick="downloadAllAsZip()" class="w-full mb-6 py-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-lg flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/30 transition transform hover:-translate-y-1">
           <i data-lucide="folder-archive" class="w-7 h-7"></i> 
           DESCARGAR CARPETA ORDENADA (ZIP)
         </button>
         <p class="text-sm font-medium text-emerald-700 dark:text-emerald-500 text-center mb-6">
-          ☝️ Recomendado: Descarga un solo archivo .zip que al abrirse contiene todas las carpetas y archivos ordenados por fecha.
+          ☝️ Recomendado: Descarga un .zip que al abrirse contiene todas las subcarpetas ordenadas.
         </p>
 
         <div class="border-t border-emerald-200 dark:border-emerald-800/50 pt-5">
@@ -289,13 +287,123 @@
           </div>
         </div>
       </div>
-
     </div>
   </section>
 
-  <!-- ======================================================================= -->
-  <!-- TAB 3: HISTORIAL (Firebase) -->
-  <!-- ======================================================================= -->
+  <!-- RESTAURADO: TAB 3: MOTOR ETL DINÁMICO UNIVERSAL -->
+  <section id="tab-content-etl" class="tab-pane hidden space-y-6">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+      <div class="border-b border-slate-200 dark:border-slate-800 pb-5 mb-6">
+        <h2 class="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="git-merge" class="w-6 h-6 text-amber-500"></i> Motor ETL Universal — "Extrae de X y pon en Y"</h2>
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mt-2">Cruza cualquier par de archivos (.xlsx, .csv). Aplica filtros, cálculos y exporta a Excel.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Archivo A -->
+        <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+          <h4 class="text-sm font-black text-amber-600 dark:text-amber-400 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center text-xs">A</span> Tabla Principal (Origen)</h4>
+          <div class="drop-zone border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center cursor-pointer hover:border-amber-500 transition" onclick="document.getElementById('etl-input-a').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleEtlDrop(event,'a')">
+            <div class="text-sm text-slate-500 mb-2 font-medium">Haz clic o arrastra un archivo .xlsx/.csv</div>
+            <div id="etl-fname-a" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">Sin archivo</div>
+            <input type="file" id="etl-input-a" class="hidden" accept=".xlsx,.xls,.csv" onchange="onEtlFileSelect(this,'a')">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Hoja (sheet)</label>
+            <select id="etl-sheet-a" onchange="onEtlSheetSelect('a')" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white"><option value="">— Selecciona hoja —</option></select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Columna Clave de Cruce</label>
+            <select id="etl-key-a" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white"><option>— Selecciona columna —</option></select>
+          </div>
+        </div>
+
+        <!-- Archivo B -->
+        <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
+          <h4 class="text-sm font-black text-blue-600 dark:text-blue-400 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-xs">B</span> Tabla Secundaria (Fuente a extraer)</h4>
+          <div class="drop-zone border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('etl-input-b').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleEtlDrop(event,'b')">
+            <div class="text-sm text-slate-500 mb-2 font-medium">Haz clic o arrastra un archivo .xlsx/.csv</div>
+            <div id="etl-fname-b" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">Sin archivo</div>
+            <input type="file" id="etl-input-b" class="hidden" accept=".xlsx,.xls,.csv" onchange="onEtlFileSelect(this,'b')">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Hoja (sheet)</label>
+            <select id="etl-sheet-b" onchange="onEtlSheetSelect('b')" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white"><option value="">— Selecciona hoja —</option></select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Columna Clave de Cruce</label>
+            <select id="etl-key-b" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white"><option>— Selecciona columna —</option></select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Opciones ETL -->
+      <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 mb-6">
+        <h4 class="text-sm font-black text-slate-700 dark:text-slate-300">Opciones del Cruce</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Tipo de Join</label>
+            <select id="etl-join-type" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white">
+              <option value="left">Left Join (Todos de A + datos de B)</option>
+              <option value="inner">Inner Join (Solo coincidencias)</option>
+              <option value="outer">Full Outer (Todos de ambos)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Filtro rápido</label>
+            <select id="etl-filter-col" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white"><option value="">Sin filtro</option></select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Operador</label>
+            <select id="etl-filter-op" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white">
+              <option value="contains">Contiene</option><option value="eq">Igual a (==)</option>
+              <option value="gt">Mayor que (>)</option><option value="lt">Menor que (<)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Valor</label>
+            <input type="text" id="etl-filter-val" placeholder="Ej: QUIEBRE" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="text-sm font-bold text-slate-500 dark:text-slate-400" id="etl-row-count"></div>
+        <button onclick="runEtl()" class="px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-black text-sm flex items-center gap-2 transition shadow-lg shadow-amber-500/20">
+          <i data-lucide="sparkles" class="w-5 h-5"></i> PROCESAR Y DESCARGAR EXCEL
+        </button>
+      </div>
+
+      <!-- Preview resultados ETL -->
+      <div id="etl-preview-wrap" class="hidden mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-sm text-emerald-600 dark:text-emerald-400 font-black" id="etl-preview-summary"></div>
+        </div>
+        <div class="overflow-x-auto max-h-64 border border-slate-200 dark:border-slate-800 rounded-xl">
+          <table class="w-full text-left text-sm">
+            <thead id="etl-preview-thead" class="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-black sticky top-0"></thead>
+            <tbody id="etl-preview-tbody" class="divide-y divide-slate-200 dark:divide-slate-800 font-mono text-slate-700 dark:text-slate-300"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESTAURADO: TAB 4: ARCHIVOS CARGADOS -->
+  <section id="tab-content-archivos" class="tab-pane hidden space-y-6">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-5 mb-6">
+        <div>
+          <h2 class="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2"><i data-lucide="folder" class="w-6 h-6 text-amber-500"></i> Archivos de la Sesión</h2>
+          <p class="text-sm font-medium text-slate-500 mt-1">Los archivos procesados en memoria (ninguno sale de tu navegador).</p>
+        </div>
+      </div>
+      <div id="archivos-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="text-base text-slate-500 py-10 text-center font-medium col-span-2">Carga archivos en el Pipeline o ETL para verlos aquí.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 5: HISTORIAL -->
   <section id="tab-content-historial" class="tab-pane hidden space-y-6">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-5 mb-5">
@@ -315,7 +423,6 @@
 
 </main>
 
-<!-- JAVASCRIPT -->
 <script>
 // ============================================================================
 // THEME & COLOR MODE LOGIC (PASTEL / DARK)
@@ -326,26 +433,20 @@ function toggleTheme() {
   const isDark = html.classList.contains('dark');
   localStorage.setItem('theme', isDark ? 'dark' : 'light');
   
-  // Actualizar gráficos al cambiar tema
   Chart.defaults.color = isDark ? '#94a3b8' : '#475569';
   Chart.defaults.scale.grid.color = isDark ? '#1e293b' : '#e2e8f0';
-  if(window.charts) {
-    Object.values(window.charts).forEach(c => c.update());
-  }
+  if(window.charts) { Object.values(window.charts).forEach(c => { if(c) c.update(); }); }
 }
 
-// Set initial theme
 if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
   document.documentElement.classList.add('dark');
 } else {
   document.documentElement.classList.remove('dark');
 }
 
-// Chart defaults global
 Chart.defaults.font.family = 'Inter, sans-serif';
 Chart.defaults.color = document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569';
 Chart.defaults.scale.grid.color = document.documentElement.classList.contains('dark') ? '#1e293b' : '#e2e8f0';
-
 
 // ============================================================================
 // FIREBASE INIT
@@ -359,10 +460,12 @@ function initFirebase() {
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.firestore();
       firebaseReady = true;
-      console.log('Firebase OK');
+      logTerminal('Firebase Firestore conectado ✓');
+    } else {
+      logTerminal('Firebase no configurado. Historial se guardará localmente.');
     }
   } catch (e) {
-    console.error('Firebase error:', e);
+    logTerminal('Firebase error: ' + e.message);
   }
 }
 
@@ -382,19 +485,25 @@ async function getFromFirestore(collection, limit=20) {
 }
 
 // ============================================================================
-// PIPELINE LOGIC (SHEETJS)
+// CORE PIPELINE & FILE HELPERS
 // ============================================================================
 const SESSION_FILES = {}; 
 const PIPELINE_DATA = {};  
 window.charts = {};
 
+function logTerminal(msg) {
+  const el = document.getElementById('terminal');
+  if (el) { el.innerHTML += `${new Date().toLocaleTimeString()} › ${msg}\n`; el.scrollTop = el.scrollHeight; }
+  else console.log('[LOG]', msg);
+}
+
 function onFileSelect(input, key) {
   const file = input.files[0];
   if (!file) return;
-  SESSION_FILES[key] = file;
+  SESSION_FILES[key] = { name: file.name, size: (file.size/1024).toFixed(1) + ' KB', file };
   const nameEl = document.getElementById(`file-name-${key}`);
-  nameEl.textContent = file.name;
-  nameEl.classList.remove('hidden');
+  if(nameEl) { nameEl.textContent = file.name; nameEl.classList.remove('hidden'); }
+  updateArchivos();
 }
 
 function handleDrop(event, key) {
@@ -423,12 +532,38 @@ async function readFileAsArrayBuffer(file) {
 
 async function parseFile(file) {
   const ab = await readFileAsArrayBuffer(file);
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    const text = new TextDecoder('utf-8').decode(ab);
+    const ws = XLSX.utils.aoa_to_sheet(text.split('\n').map(l => l.split(',')));
+    return { sheetNames: ['Data'], sheets: { 'Data': XLSX.utils.sheet_to_json(ws) } };
+  }
   const wb = XLSX.read(ab, { type: 'array', cellText: true });
   const sheets = {};
   for (const sn of wb.SheetNames) {
     try { sheets[sn] = XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval: '' }); } catch(e) {}
   }
   return { sheetNames: wb.SheetNames, sheets };
+}
+
+function getXlsxBlob(data, sheetName) {
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0,31));
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  return new Blob([wbout], {type:"application/octet-stream"});
+}
+
+function getMultiXlsxBlob(sheetsMap) {
+  const wb = XLSX.utils.book_new();
+  for (const [name, data] of Object.entries(sheetsMap)) {
+    if(data && data.length > 0) {
+      const ws = XLSX.utils.json_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, name.substring(0,31));
+    }
+  }
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  return new Blob([wbout], {type:"application/octet-stream"});
 }
 
 async function runFerreyrosPipeline() {
@@ -448,6 +583,7 @@ async function runFerreyrosPipeline() {
   btn.disabled = true;
   document.getElementById('progress-wrap').classList.remove('hidden');
   document.getElementById('download-section').classList.add('hidden');
+  document.getElementById('terminal').innerHTML = '';
   
   const setProgress = (pct, label) => {
     document.getElementById('progress-bar').style.width = pct + '%';
@@ -458,6 +594,7 @@ async function runFerreyrosPipeline() {
   try {
     // 1. EWM
     setProgress(15, 'Leyendo EWM (Inventario Físico)...');
+    logTerminal(`Procesando EWM: ${files.ewm.name}`);
     const ewmParsed = await parseFile(files.ewm);
     const ewmRows = ewmParsed.sheets[ewmParsed.sheetNames[0]] || [];
     const ewmMap = new Map();
@@ -469,9 +606,11 @@ async function runFerreyrosPipeline() {
       ex.stock += qty;
       ewmMap.set(key, ex);
     }
+    logTerminal(`EWM: ${ewmMap.size} materiales únicos consolidados.`);
 
     // 2. MB51
     setProgress(35, 'Leyendo MB51 (Movimientos)...');
+    logTerminal(`Procesando MB51: ${files.mb51.name}`);
     const mb51Parsed = await parseFile(files.mb51);
     const mb51Rows = mb51Parsed.sheets[mb51Parsed.sheetNames[0]] || [];
     const mb51Map = new Map();
@@ -485,9 +624,11 @@ async function runFerreyrosPipeline() {
       ex.valor += valor;
       mb51Map.set(key, ex);
     }
+    logTerminal(`MB51: Consumo total detectado S/. ${totalConsumoPEN.toLocaleString('es-PE',{maximumFractionDigits:2})}`);
 
     // 3. Planilla
     setProgress(55, 'Cruzando con Planilla de Stock (Parámetros)...');
+    logTerminal(`Cruzando datos maestros: ${files.planilla.name}`);
     const planParsed = await parseFile(files.planilla);
     const planSheet = planParsed.sheetNames.find(s => s === 'Export') || planParsed.sheetNames[0];
     const planRows = planParsed.sheets[planSheet] || [];
@@ -516,7 +657,7 @@ async function runFerreyrosPipeline() {
       
       const alert = {
         Material: row['Material'],
-        Descripcion: row['Descripción de Material'] || '',
+        Descripcion: row['Descripción de Material'] || row['Descripcion de Material'] || '',
         Stock_EWM: stockFisico,
         Stock_Minimo: stockMin,
         Stock_Maximo: stockMax,
@@ -530,32 +671,44 @@ async function runFerreyrosPipeline() {
       const mb51Row = mb51Map.get(key);
       if (mb51Row) topConsumoRaw.push({ Material: alert.Material, Descripcion: alert.Descripcion, Valor_PEN: mb51Row.valor });
     }
+    logTerminal(`CRUCE: ${alertas.length} materiales. ${quiebres} Quiebres | ${sobrestock} Sobrestock.`);
 
-    // 4. Transferencias
+    // 4. Transferencias (RESTAURADO GUARDANDO COLUMNAS ORIGINALES)
     setProgress(75, 'Reparando Transferencias (#N/A)...');
     const transfItems = [];
     if (files.transf) {
+      logTerminal(`Procesando Transferencias: ${files.transf.name}`);
       const trParsed = await parseFile(files.transf);
       const trSheet = trParsed.sheetNames.find(s => s === 'Hoja2') || trParsed.sheetNames[0];
       for (const row of trParsed.sheets[trSheet] || []) {
-        const key = normalizeKey(row['Número de parte'] || row['Material']);
+        const key = normalizeKey(row['Número de parte'] || row['Numero de parte'] || row['Material'] || '');
         const aRow = alertas.find(a => normalizeKey(a.Material) === key);
-        if (aRow) {
-          const cantEnvio = Math.max(0, aRow.Stock_EWM - aRow.Stock_Maximo);
-          transfItems.push({
-            Material: row['Número de parte'],
-            Descripcion: aRow.Descripcion,
-            Stock_Real: aRow.Stock_EWM,
-            Stock_Maximo: aRow.Stock_Maximo,
-            Cant_Envio_Recomendada: cantEnvio
-          });
+        const stockReal = aRow ? aRow.Stock_EWM : 0;
+        const stockMax = aRow ? aRow.Stock_Maximo : 0;
+        const cantEnvio = Math.max(0, stockReal - stockMax);
+        
+        // Conservar campos originales que no estén rotos
+        const cleanRow = {};
+        for(let k in row) {
+           if(!['Stock','Stock Mínimo','Stock Máximo','Cant. De envio','Cantidad que Queda'].includes(k)) cleanRow[k] = row[k];
         }
+        
+        transfItems.push({
+          ...cleanRow,
+          Stock_Real_EWM: stockReal,
+          Stock_Maximo_Plan: stockMax,
+          Cant_Envio_Recomendada: cantEnvio,
+          Cantidad_que_Queda: stockReal - cantEnvio
+        });
       }
+      logTerminal(`Transferencias: ${transfItems.length} filas reparadas exitosamente.`);
+    } else {
+      logTerminal(`Transferencias: Archivo no cargado (Opcional). Omitiendo.`);
     }
 
     setProgress(95, 'Finalizando Motor y Preparando Descargas...');
     
-    // Save to memory
+    // Guardar en memoria
     PIPELINE_DATA.alertas = alertas;
     PIPELINE_DATA.transfItems = transfItems;
     PIPELINE_DATA.kpis = { quiebres, sobrestock, ok, totalStockPEN, totalConsumoPEN, totalSkus: alertas.length };
@@ -563,13 +716,14 @@ async function runFerreyrosPipeline() {
     PIPELINE_DATA.topConsumo = topConsumoRaw.sort((a,b)=>b.Valor_PEN-a.Valor_PEN).slice(0,10);
     PIPELINE_DATA.timestamp = new Date().toISOString();
 
-    // Save to Firebase
+    // Guardar en Firebase
     saveToFirestore('historial', {
       kpis: PIPELINE_DATA.kpis,
       timestamp: PIPELINE_DATA.timestamp
     });
 
     setProgress(100, '¡Proceso Completado con Éxito!');
+    logTerminal('✅ PIPELINE FINALIZADO CORRECTAMENTE.');
     document.getElementById('progress-bar').classList.remove('progress-animate');
     document.getElementById('download-section').classList.remove('hidden');
     
@@ -577,6 +731,7 @@ async function runFerreyrosPipeline() {
 
   } catch (err) {
     console.error(err);
+    logTerminal(`❌ ERROR FATAL: ${err.message}`);
     alert('Error: ' + err.message);
   } finally {
     btn.disabled = false;
@@ -584,49 +739,47 @@ async function runFerreyrosPipeline() {
 }
 
 // ============================================================================
-// DESCARGA ESTRUCTURADA EN CARPETAS (NUEVO - JSZIP)
+// SISTEMA DE DESCARGA ZIP / REPORTE MACRO RESTAURADO
 // ============================================================================
-function getXlsxBlob(data, sheetName) {
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-  return new Blob([wbout], {type:"application/octet-stream"});
-}
-
 async function downloadAllAsZip() {
   const zip = new JSZip();
-  const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const dateStr = new Date().toISOString().split('T')[0]; 
   const ts = new Date().toISOString().replace(/[:.]/g,'-').substring(0,19);
   
-  // Crear carpeta principal estructurada
   const folderName = `FERREYROS_REPORTES_${dateStr}`;
   const root = zip.folder(folderName);
+  
+  const fAlertas = root.folder("1_Alertas_y_Quiebres");
+  const fTransf = root.folder("2_Transferencias_Corregidas");
+  const fConsumo = root.folder("3_Historial_Consumo");
+  const fMaestro = root.folder("4_Consolidado_Maestro");
 
-  // Subcarpetas internas ordenadas
-  const folderAlertas = root.folder("1_Alertas_y_Quiebres");
-  const folderTransf = root.folder("2_Transferencias_Corregidas");
-  const folderConsumo = root.folder("3_Historial_Consumo");
-  const folderMaestro = root.folder("4_Consolidado_Maestro");
-
-  // Generar archivos y colocarlos en sus carpetas
   if (PIPELINE_DATA.alertas && PIPELINE_DATA.alertas.length > 0) {
-    folderAlertas.file(`Alertas_Stock_${ts}.xlsx`, getXlsxBlob(PIPELINE_DATA.alertas, 'Alertas'));
-    
-    // Filtros específicos en alertas
-    const soloQuiebres = PIPELINE_DATA.alertas.filter(a => a.Estado_Stock === 'QUIEBRE');
-    folderAlertas.file(`URGENTE_Solo_Quiebres_${ts}.xlsx`, getXlsxBlob(soloQuiebres, 'Quiebres'));
+    fAlertas.file(`Alertas_Stock_${ts}.xlsx`, getXlsxBlob(PIPELINE_DATA.alertas, 'Alertas'));
+    const quiebres = PIPELINE_DATA.alertas.filter(a => a.Estado_Stock === 'QUIEBRE');
+    fAlertas.file(`URGENTE_Solo_Quiebres_${ts}.xlsx`, getXlsxBlob(quiebres, 'Quiebres'));
   }
-
   if (PIPELINE_DATA.transfItems && PIPELINE_DATA.transfItems.length > 0) {
-    folderTransf.file(`Transferencias_Limpias_${ts}.xlsx`, getXlsxBlob(PIPELINE_DATA.transfItems, 'Transferencias'));
+    fTransf.file(`Transferencias_Limpias_${ts}.xlsx`, getXlsxBlob(PIPELINE_DATA.transfItems, 'Transferencias'));
   }
-
   if (PIPELINE_DATA.topConsumo && PIPELINE_DATA.topConsumo.length > 0) {
-    folderConsumo.file(`Consumo_MB51_${ts}.xlsx`, getXlsxBlob(PIPELINE_DATA.topConsumo, 'Consumo'));
+    fConsumo.file(`Consumo_MB51_${ts}.xlsx`, getXlsxBlob(PIPELINE_DATA.topConsumo, 'Consumo'));
   }
+  
+  // Agregar el consolidado macro al ZIP también
+  const kpis = PIPELINE_DATA.kpis || {};
+  const resumen = [
+    { Indicador: 'Total SKUs', Valor: kpis.totalSkus },
+    { Indicador: 'Quiebres', Valor: kpis.quiebres },
+    { Indicador: 'Valor Inventario PEN', Valor: kpis.totalStockPEN }
+  ];
+  const macroBlob = getMultiXlsxBlob({
+    'Resumen': resumen,
+    'Quiebres': PIPELINE_DATA.alertas ? PIPELINE_DATA.alertas.filter(a => a.Estado_Stock === 'QUIEBRE') : [],
+    'Transferencias': PIPELINE_DATA.transfItems || []
+  });
+  fMaestro.file(`Consolidado_Maestro_${ts}.xlsx`, macroBlob);
 
-  // Generar y descargar el archivo ZIP
   const content = await zip.generateAsync({type:"blob"});
   saveAs(content, `${folderName}.zip`);
 }
@@ -636,11 +789,188 @@ function downloadReport(type) {
   if (type === 'alertas') saveAs(getXlsxBlob(PIPELINE_DATA.alertas, 'Alertas'), `Alertas_${ts}.xlsx`);
   if (type === 'transf') saveAs(getXlsxBlob(PIPELINE_DATA.transfItems, 'Transferencias'), `Transferencias_${ts}.xlsx`);
   if (type === 'consumo') saveAs(getXlsxBlob(PIPELINE_DATA.topConsumo, 'Consumo'), `Consumo_${ts}.xlsx`);
-  if (type === 'macro') saveAs(getXlsxBlob(PIPELINE_DATA.alertas, 'Maestro'), `Macro_Maestro_${ts}.xlsx`);
+  if (type === 'macro') {
+    // RESTAURADO: Reporte multi-hoja completo
+    const kpis = PIPELINE_DATA.kpis || {};
+    const macroBlob = getMultiXlsxBlob({
+      'Resumen': [{ Indicador: 'SKUs', Valor: kpis.totalSkus }, { Indicador: 'Quiebres', Valor: kpis.quiebres }, { Indicador: 'Sobrestock', Valor: kpis.sobrestock }],
+      'Alertas_Completo': PIPELINE_DATA.alertas || [],
+      'Quiebres': PIPELINE_DATA.alertas ? PIPELINE_DATA.alertas.filter(a => a.Estado_Stock === 'QUIEBRE') : [],
+      'Sobrestock': PIPELINE_DATA.alertas ? PIPELINE_DATA.alertas.filter(a => a.Estado_Stock === 'SOBRESTOCK') : [],
+      'Transferencias': PIPELINE_DATA.transfItems || []
+    });
+    saveAs(macroBlob, `Macro_Maestro_${ts}.xlsx`);
+  }
 }
 
 // ============================================================================
-// DASHBOARD & CHARTS
+// RESTAURADO: MOTOR ETL UNIVERSAL (TAB 3)
+// ============================================================================
+const ETL_FILES = { a: null, b: null };
+const ETL_SHEETS = { a: {}, b: {} };
+
+async function onEtlFileSelect(input, side) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById(`etl-fname-${side}`).textContent = file.name;
+  const parsed = await parseFile(file);
+  ETL_FILES[side] = file;
+  ETL_SHEETS[side] = parsed.sheets;
+  
+  const sheetSel = document.getElementById(`etl-sheet-${side}`);
+  sheetSel.innerHTML = parsed.sheetNames.map(s => `<option value="${s}">${s}</option>`).join('');
+  onEtlSheetSelect(side);
+  
+  // Guardar en sesión para Tab Archivos
+  SESSION_FILES[`etl_${side}`] = { name: file.name, size: (file.size/1024).toFixed(1) + ' KB', file };
+  updateArchivos();
+}
+
+function onEtlSheetSelect(side) {
+  const sheetName = document.getElementById(`etl-sheet-${side}`).value;
+  const rows = ETL_SHEETS[side][sheetName] || [];
+  const cols = rows.length > 0 ? Object.keys(rows[0]) : [];
+  
+  const keySel = document.getElementById(`etl-key-${side}`);
+  keySel.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
+  
+  if (side === 'a') {
+    const filterCol = document.getElementById('etl-filter-col');
+    filterCol.innerHTML = '<option value="">Sin filtro</option>' + cols.map(c=>`<option value="${c}">${c}</option>`).join('');
+    document.getElementById('etl-row-count').textContent = `Archivo A: ${rows.length.toLocaleString()} filas × ${cols.length} columnas`;
+  }
+}
+
+function handleEtlDrop(event, side) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('drag-over');
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  const input = document.getElementById(`etl-input-${side}`);
+  const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
+  onEtlFileSelect(input, side);
+}
+
+async function runEtl() {
+  const sheetA = document.getElementById('etl-sheet-a').value;
+  const sheetB = document.getElementById('etl-sheet-b').value;
+  const keyA = document.getElementById('etl-key-a').value;
+  const keyB = document.getElementById('etl-key-b').value;
+  const joinType = document.getElementById('etl-join-type').value;
+  const filterCol = document.getElementById('etl-filter-col').value;
+  const filterOp = document.getElementById('etl-filter-op').value;
+  const filterVal = document.getElementById('etl-filter-val').value.trim();
+
+  if (!ETL_SHEETS.a[sheetA]) { alert('Carga el Archivo A primero.'); return; }
+
+  let rowsA = [...(ETL_SHEETS.a[sheetA] || [])];
+  let result = [];
+
+  if (ETL_SHEETS.b[sheetB] && keyA && keyB) {
+    const mapB = new Map();
+    for (const row of ETL_SHEETS.b[sheetB]) {
+      const k = normalizeKey(row[keyB]);
+      if (!mapB.has(k)) mapB.set(k, row);
+    }
+    for (const rowA of rowsA) {
+      const k = normalizeKey(rowA[keyA]);
+      const rowB = mapB.get(k);
+      if (joinType === 'inner' && !rowB) continue;
+      const merged = { ...rowA };
+      if (rowB) {
+        for (const [bKey, bVal] of Object.entries(rowB)) {
+          const outKey = (bKey in merged) ? `${bKey}_B` : bKey;
+          merged[outKey] = bVal;
+        }
+      }
+      result.push(merged);
+    }
+    if (joinType === 'outer') {
+      const mapA = new Set(rowsA.map(r => normalizeKey(r[keyA])));
+      for (const rowB of ETL_SHEETS.b[sheetB]) {
+        if (!mapA.has(normalizeKey(rowB[keyB]))) result.push({ ...rowB });
+      }
+    }
+  } else { result = rowsA; }
+
+  if (filterCol && filterVal) {
+    result = result.filter(row => {
+      const val = String(row[filterCol] || '');
+      const num = parseNum(val);
+      const numVal = parseNum(filterVal);
+      switch (filterOp) {
+        case 'contains': return val.toLowerCase().includes(filterVal.toLowerCase());
+        case 'eq': return val === filterVal;
+        case 'gt': return num > numVal;
+        case 'lt': return num < numVal;
+        default: return true;
+      }
+    });
+  }
+
+  const ts = new Date().toISOString().replace(/[:.]/g,'-').substring(0,19);
+  saveAs(getXlsxBlob(result, 'Resultado_ETL'), `Cruce_ETL_${ts}.xlsx`);
+
+  // Preview
+  const previewWrap = document.getElementById('etl-preview-wrap');
+  previewWrap.classList.remove('hidden');
+  document.getElementById('etl-preview-summary').textContent = `${result.length.toLocaleString()} filas generadas. Descarga iniciada ↓`;
+  const cols = result.length > 0 ? Object.keys(result[0]) : [];
+  document.getElementById('etl-preview-thead').innerHTML = `<tr>${cols.slice(0,10).map(c=>`<th class="py-3 px-4 truncate max-w-[150px]">${c}</th>`).join('')}${cols.length>10?'<th class="py-3 px-4">…</th>':''}</tr>`;
+  document.getElementById('etl-preview-tbody').innerHTML = result.slice(0,20).map(r=>`<tr class="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">${cols.slice(0,10).map(c=>`<td class="py-2 px-4 truncate max-w-[150px]">${r[c]??''}</td>`).join('')}${cols.length>10?'<td class="py-2 px-4 text-slate-500">…</td>':''}</tr>`).join('');
+}
+
+// ============================================================================
+// RESTAURADO: TAB ARCHIVOS Y TAB HISTORIAL
+// ============================================================================
+function updateArchivos() {
+  const container = document.getElementById('archivos-container');
+  const all = { ...SESSION_FILES };
+  if (!Object.keys(all).length) return;
+  container.innerHTML = Object.entries(all).map(([key, f]) => `
+    <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i data-lucide="file-spreadsheet" class="w-6 h-6 text-emerald-500"></i>
+        <div>
+          <div class="text-xs font-black text-amber-500 uppercase">${key}</div>
+          <div class="text-sm font-bold text-slate-700 dark:text-slate-300 truncate w-48">${f.name}</div>
+        </div>
+      </div>
+      <div class="text-xs font-black text-slate-400 bg-slate-200 dark:bg-slate-800 px-2 py-1 rounded-md">${f.size}</div>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+async function loadHistorial() {
+  const container = document.getElementById('historial-container');
+  container.innerHTML = '<div class="text-base text-slate-500 py-10 text-center font-medium">Cargando desde Firebase Firestore...</div>';
+  const items = await getFromFirestore('historial', 20);
+  if (!items.length) { container.innerHTML = '<div class="text-base text-slate-500 py-10 text-center">Sin historial aún.</div>'; return; }
+
+  container.innerHTML = items.map(item => {
+    const k = item.kpis || {};
+    const ts = item.timestamp ? new Date(item.timestamp).toLocaleString('es-PE') : 'Fecha desconocida';
+    return `
+      <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm font-bold text-amber-600 dark:text-amber-400"><i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i> ${ts}</span>
+          <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded-md">☁️ Guardado</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          <div><div class="text-2xl font-black text-slate-800 dark:text-white">${(k.totalSkus||0).toLocaleString()}</div><div class="text-xs font-bold text-slate-500">SKUs</div></div>
+          <div><div class="text-2xl font-black text-rose-600 dark:text-rose-400">${(k.quiebres||0).toLocaleString()}</div><div class="text-xs font-bold text-slate-500">Quiebres</div></div>
+          <div><div class="text-2xl font-black text-amber-600 dark:text-amber-400">${(k.sobrestock||0).toLocaleString()}</div><div class="text-xs font-bold text-slate-500">Sobrestock</div></div>
+          <div><div class="text-lg font-black text-emerald-600 dark:text-emerald-400">S/. ${(k.totalStockPEN||0).toLocaleString('es-PE',{maximumFractionDigits:0})}</div><div class="text-xs font-bold text-slate-500">Valor Total</div></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  lucide.createIcons();
+}
+
+// ============================================================================
+// DASHBOARD CHARTS & TABS ROUTING
 // ============================================================================
 function updateDashboard() {
   const kpis = PIPELINE_DATA.kpis;
@@ -664,38 +994,27 @@ function renderChartHealth(kpis) {
   if (window.charts.health) window.charts.health.destroy();
   window.charts.health = new Chart(ctx, {
     type: 'doughnut',
-    data: {
-      labels: ['Quiebres', 'Sobrestock', 'OK'],
-      datasets: [{ data: [kpis.quiebres, kpis.sobrestock, kpis.ok], backgroundColor: ['#f43f5e','#f59e0b','#10b981'], borderWidth:0 }]
-    },
+    data: { labels: ['Quiebres', 'Sobrestock', 'OK'], datasets: [{ data: [kpis.quiebres, kpis.sobrestock, kpis.ok], backgroundColor: ['#f43f5e','#f59e0b','#10b981'], borderWidth:0 }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 14, weight: 'bold' } } } } }
   });
 }
-
 function renderChartQuiebres(items) {
   document.getElementById('chartQuiebres-placeholder').style.display = 'none';
   const ctx = document.getElementById('chartQuiebres').getContext('2d');
   if (window.charts.quiebres) window.charts.quiebres.destroy();
   window.charts.quiebres = new Chart(ctx, {
     type: 'bar',
-    data: { 
-      labels: items.map(i => String(i.Material).substring(0,12)), 
-      datasets: [{ label: 'Déficit S/.', data: items.map(i => i.Deficit_PEN), backgroundColor: '#f43f5e', borderRadius: 6 }] 
-    },
+    data: { labels: items.map(i => String(i.Material).substring(0,12)), datasets: [{ label: 'Déficit S/.', data: items.map(i => i.Deficit_PEN), backgroundColor: '#f43f5e', borderRadius: 6 }] },
     options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { y: { ticks: { font: { size: 12, weight: 'bold' } } } } }
   });
 }
-
 function renderChartConsumo(items) {
   document.getElementById('chartConsumo-placeholder').style.display = 'none';
   const ctx = document.getElementById('chartConsumo').getContext('2d');
   if (window.charts.consumo) window.charts.consumo.destroy();
   window.charts.consumo = new Chart(ctx, {
     type: 'bar',
-    data: { 
-      labels: items.map(i => String(i.Material).substring(0,12)), 
-      datasets: [{ label: 'Consumo S/.', data: items.map(i => i.Valor_PEN), backgroundColor: '#3b82f6', borderRadius: 6 }] 
-    },
+    data: { labels: items.map(i => String(i.Material).substring(0,12)), datasets: [{ label: 'Consumo S/.', data: items.map(i => i.Valor_PEN), backgroundColor: '#3b82f6', borderRadius: 6 }] },
     options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { y: { ticks: { font: { size: 12, weight: 'bold' } } } } }
   });
 }
@@ -703,28 +1022,44 @@ function renderChartConsumo(items) {
 function renderAlertasTable(data) {
   const tbody = document.getElementById('alertas-tbody');
   const display = data.filter(a => a.Estado_Stock === 'QUIEBRE').slice(0, 100);
-  if (!display.length) return tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center">No hay quiebres.</td></tr>';
+  if (!display.length) return tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center font-bold text-slate-500">No hay quiebres críticos.</td></tr>';
   
   tbody.innerHTML = display.map(a => `
     <tr class="hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
       <td class="py-3 px-4 font-black text-slate-900 dark:text-white">${a.Material}</td>
-      <td class="py-3 px-4 font-sans text-sm truncate max-w-[200px]">${a.Descripcion}</td>
+      <td class="py-3 px-4 font-sans text-sm font-medium truncate max-w-[200px]">${a.Descripcion}</td>
       <td class="py-3 px-4 text-right font-black text-rose-600 dark:text-rose-400">${(+a.Stock_EWM).toFixed(0)}</td>
-      <td class="py-3 px-4 text-right">${(+a.Stock_Minimo).toFixed(0)}</td>
+      <td class="py-3 px-4 text-right font-bold text-slate-500">${(+a.Stock_Minimo).toFixed(0)}</td>
       <td class="py-3 px-4 text-right font-black text-amber-600 dark:text-amber-400">S/. ${(+a.Valor_Stock_PEN).toLocaleString('es-PE',{maximumFractionDigits:0})}</td>
       <td class="py-3 px-4 text-center"><span class="bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 font-bold px-3 py-1 rounded-md text-xs">REPONER</span></td>
     </tr>`).join('');
 }
 
-// ============================================================================
-// UI & TABS
-// ============================================================================
+function filterAlertasTable() {
+  const q = document.getElementById('filter-alertas').value.toLowerCase();
+  const filtered = (PIPELINE_DATA.alertas||[]).filter(a => a.Material.toLowerCase().includes(q) || (a.Descripcion||'').toLowerCase().includes(q));
+  renderAlertasTable(filtered);
+}
+
+let alertasSortCol = null, alertasSortAsc = true;
+function sortAlertas(col) {
+  if (alertasSortCol === col) alertasSortAsc = !alertasSortAsc; else { alertasSortCol = col; alertasSortAsc = false; }
+  const data = [...(PIPELINE_DATA.alertas||[])].sort((a,b) => {
+    const va = a[col]; const vb = b[col];
+    if (typeof va === 'number') return alertasSortAsc ? va-vb : vb-va;
+    return alertasSortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+  });
+  renderAlertasTable(data);
+}
+
 function switchTab(tabId) {
   document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('tab-active'));
   document.getElementById(`tab-content-${tabId}`).classList.remove('hidden');
   document.getElementById(`tab-btn-${tabId}`).classList.add('tab-active');
   if(tabId === 'dashboard' && PIPELINE_DATA.alertas) updateDashboard();
+  if(tabId === 'historial') loadHistorial();
+  if(tabId === 'archivos') updateArchivos();
 }
 
 async function loadDashboard() {
